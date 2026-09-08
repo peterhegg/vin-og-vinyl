@@ -50,7 +50,7 @@ export default function WineForm({ initial, onSave, onCancel }) {
           target="_blank"
           rel="noopener noreferrer"
           className="hint"
-          style={{ color: "var(--gold)" }}
+          style={{ color: "var(--accent)" }}
         >
           Åpne produktsiden på Vinmonopolet for detaljer →
         </a>

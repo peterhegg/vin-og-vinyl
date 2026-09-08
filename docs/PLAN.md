@@ -145,6 +145,8 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 - Sjekk kontrasten på disc-glyfen på nytt etter fargebyttet; den ble justert i Fase 4.
 
 ### Fase 8 — Polish
+- Fra Fase 7: bunn-nav og kort-plassholdere bruker emoji (🗃️ ➕ ⚙️ 🍷 💿) som ser ulike ut
+  per plattform og bryter med ikonets språk. Vurder SVG-glyfer i gull/aksent i stedet.
 - **Modell:** Sonnet · **Effort:** medium · **Egen chat:** nei
 - **Skills:** `accessibility-review`, `ux-copy`
 - Tomtilstander, mikrotekst, 48px trykkmål, offline-banner-tekst, tastatur/skjermleser.
@@ -207,13 +209,13 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 - [x] Fase 4 — Vinyl-UI ✓ 2026-09-08
 - [x] Fase 5 — Kombinert navigasjon ✓ 2026-09-08
 - [x] Fase 6 — Eksport/import v2 ✓ 2026-09-08
-- [ ] Fase 7 — Tema + ikoner
+- [x] Fase 7 — Tema + ikoner ✓ 2026-09-08
 - [ ] Fase 8 — Polish
 - [ ] Fase 9 — Sikkerhet
 - [ ] Fase 10 — Test
 - [ ] Fase 11 — Deploy-handoff
 
-**Nåværende fase:** Fase 7 — Tema + ikoner. Fable, medium. Egen chat.
+**Nåværende fase:** Fase 8 — Polish. Sonnet. accessibility-review + ux-copy.
 
 Fase 0 gjort: navn byttet i alle filer (DB_NAME bevisst beholdt), repo renamet på
 GitHub til `vin-og-vinyl` (remote oppdatert, redirect aktiv), prod-bygg verifisert
@@ -301,6 +303,24 @@ atomisitet, stykkevis skriving over flush-grensene (250 viner + 45 plater), full
 eksport → tøm → import, og ekte v1-fil. Deretter hele UI-flyten i appen: import fra
 filvelgeren, «2 viner · 2 plater» i tellelinja, miniatyr tegnet, fullbilde i `covers`,
 og alle fire feilmeldingene. Prod-bygg grønt.
+
+Fase 7 gjort: tema «Kjeller og grafitt» dokumentert i `docs/THEME.md`. Tokensettet
+vinyl overstyrer ble større enn de to planen nevnte: `--accent`, `--accent-soft`,
+`--accent-tint`, `--accent-gradient`, `--on-accent` **og** `--surface`/`--surface-2` → grafitt
+(`#22161E`/`#2C2228`, luminansmatchet mot burgunder så ingen kontrast endres). Det er
+«grafitt/blekk»-halvdelen av beslutningen; messing (`#C8955A`, tone 32° mot gullets 44°)
+er aksenten. Strukturelt gull (fokusring, bunn-nav, felt-fokus) er urørt — det er merkevaren.
+Hardkodede gull-gradienter i `.btn-primary`/`.segmented` og inline `var(--gold)` på lenker i
+skjema/detalj ble flyttet til aksent-tokens. `SettingsScreen` er delt og får ingen
+`data-collection` → alltid gull. Disc-glyfens hull bruker ny `--ink`. Kontrast sjekket på
+nytt: messing 5,8–7,2:1 på alle flater; aktiv/inaktiv disc skilles på form (1,7:1 i farge,
+som Fase 4 la opp til). **Ikon:** ny `public/icons/icon.svg` — platen som en kjøligere
+mørkhet inni kjelleren (16 riller à 7 %, 3 à 20 %, én gullring), glasset foran med mørk
+halo. `icon-maskable.svg` er samme komposisjon i 86 % (safe zone). Ingen svg-rasterizer på
+maskinen — PNG-ene (512/192/180/64/512-maskable) ble tegnet fra SVG via nettleser-canvas
+mot en liten node-server i scratchpad, deretter `optimize`-lagret med PIL. Aldri rediger
+PNG-ene for hånd. Verifisert i nettleser: vinyl-liste/detalj/skjema, vin-siden uendret,
+Innstillinger nøytral. Prod-bygg grønt.
 
 ## Fast praksis (etablert Fase 0–6, gjelder resten)
 

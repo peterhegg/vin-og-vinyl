@@ -23,7 +23,7 @@
   </defs>
 
   <rect width="512" height="512" fill="url(#cellar)"/>
-  <g >
+  <g transform="translate(256 256) scale(0.86) translate(-256 -256)">
   <!-- the record: a cooler darkness inside the warm one -->
   <circle cx="256" cy="266" r="208" fill="url(#record)"/>
   <g fill="none" stroke="#C9A84C" stroke-width="1.2" stroke-opacity="0.07">

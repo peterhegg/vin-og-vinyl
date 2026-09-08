@@ -35,7 +35,7 @@ export default function App() {
   };
 
   return (
-    <div className="app-shell" data-collection={nav.collection}>
+    <div className="app-shell" data-collection={onSettings ? undefined : nav.collection}>
       {!online && <div className="offline-banner">Ingen nettforbindelse — søk krever nett</div>}
 
       {showSegment && (

@@ -21,7 +21,7 @@ const GLYPHS = {
     active ? (
       <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <circle cx="12" cy="12" r="10" fill="var(--accent)" />
-        <circle cx="12" cy="12" r="3.4" fill="var(--bg)" />
+        <circle cx="12" cy="12" r="3.4" fill="var(--ink)" />
         <circle cx="12" cy="12" r="1" fill="var(--accent)" />
       </svg>
     ) : (

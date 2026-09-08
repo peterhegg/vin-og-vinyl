@@ -66,7 +66,7 @@ export default function WineDetail({ wine, onEdit, onDelete, onToggleWantAgain, 
           <div className="detail-row">
             <dt />
             <dd>
-              <a href={wine.vinmonopoletUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--gold)" }}>
+              <a href={wine.vinmonopoletUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)" }}>
                 Se på Vinmonopolet →
               </a>
             </dd>

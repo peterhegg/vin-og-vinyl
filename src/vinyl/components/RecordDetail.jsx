@@ -81,7 +81,7 @@ export default function RecordDetail({ record, cover, onEdit, onDelete, onBack, 
           <div className="detail-row">
             <dt />
             <dd>
-              <a href={record.discogsUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--gold)" }}>
+              <a href={record.discogsUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)" }}>
                 Se på Discogs →
               </a>
             </dd>

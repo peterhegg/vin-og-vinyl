@@ -110,7 +110,7 @@ export default function RecordForm({ initial, initialCover = null, onSave, onCan
           target="_blank"
           rel="noopener noreferrer"
           className="hint"
-          style={{ color: "var(--gold)" }}
+          style={{ color: "var(--accent)" }}
         >
           Åpne utgivelsen på Discogs →
         </a>

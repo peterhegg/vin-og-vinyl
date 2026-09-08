@@ -1,20 +1,37 @@
 /* ============================================================
    Vin og vinyl — design tokens
-   Dark burgundy cellar atmosphere, gold accents, serif display.
+   Theme «Kjeller og grafitt» (docs/THEME.md): one burgundy cellar,
+   two materials on top of it — gold for wine, graphite + brass for vinyl.
    ============================================================ */
 
 :root {
-  /* Color — brand */
+  /* Color — the cellar (shared by both collections) */
   --bg: #1A0A0E;
-  --surface: #2C1018;
-  --surface-2: #3D1A22;
+  --burgundy: #2C1018;
+  --burgundy-2: #3D1A22;
+  --ink: #141118; /* record black: cooler than the cellar, used for label holes */
+
+  /* Color — wine material: gold */
   --gold: #C9A84C;
   --gold-soft: #9c823a;
   --gold-tint: rgba(201, 168, 76, 0.12);
 
-  /* Collection accent — gold for wine; a vinyl override lands here in Fase 7 (ADR-8). */
+  /* Color — vinyl material: graphite (luminance-matched to burgundy) + brass */
+  --graphite: #22161E;
+  --graphite-2: #2C2228;
+  --brass: #C8955A;
+  --brass-soft: #9b6e3b;
+  --brass-tint: rgba(200, 149, 90, 0.12);
+
+  /* Collection tokens — wine defaults; the vinyl block below swaps them (ADR-8).
+     Structure (focus ring, nav, links) stays gold: that is the app's brand. */
+  --surface: var(--burgundy);
+  --surface-2: var(--burgundy-2);
   --accent: var(--gold);
   --accent-soft: var(--gold-soft);
+  --accent-tint: var(--gold-tint);
+  --accent-gradient: linear-gradient(180deg, #d4b45c, var(--gold) 55%, #b3933f);
+  --on-accent: #241009; /* text on the accent gradient: ≥6.8:1 on both gold and brass */
 
   /* Color — text */
   --text: #F2E8D0;
@@ -58,6 +75,17 @@
   /* Motion */
   --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
   --dur: 0.16s;
+}
+
+/* Vinyl collection: graphite surfaces, brass accent. Same darkness, cooler
+   material — the burgundy cellar (body background) stays underneath. */
+.app-shell[data-collection="vinyl"] {
+  --surface: var(--graphite);
+  --surface-2: var(--graphite-2);
+  --accent: var(--brass);
+  --accent-soft: var(--brass-soft);
+  --accent-tint: var(--brass-tint);
+  --accent-gradient: linear-gradient(180deg, #d8a86c, var(--brass) 55%, #a97a45);
 }
 
 /* ============================================================
@@ -146,7 +174,7 @@ input, select, textarea {
   font-size: var(--fs-small);
   white-space: nowrap;
 }
-.stats-line strong { color: var(--gold); font-weight: 600; }
+.stats-line strong { color: var(--accent); font-weight: 600; }
 
 .stack { display: flex; flex-direction: column; gap: var(--sp-4); }
 .stack-sm { display: flex; flex-direction: column; gap: var(--sp-2); }
@@ -180,8 +208,8 @@ input, select, textarea {
 .btn:disabled { opacity: 0.45; cursor: default; }
 
 .btn-primary {
-  background: linear-gradient(180deg, #d4b45c, var(--gold) 55%, #b3933f);
-  color: #241009;
+  background: var(--accent-gradient);
+  color: var(--on-accent);
   font-weight: 600;
   box-shadow: var(--shadow-soft);
 }
@@ -200,7 +228,7 @@ input, select, textarea {
 
 .btn-link {
   min-height: var(--tap);
-  color: var(--gold);
+  color: var(--accent);
   padding: 0 var(--sp-2);
   font-size: var(--fs-body);
   display: inline-flex;
@@ -382,8 +410,8 @@ input, select, textarea {
 .detail-row dd { margin: 0; font-size: 14px; text-align: right; }
 
 .note-block {
-  background: var(--gold-tint);
-  border-left: 3px solid var(--gold);
+  background: var(--accent-tint);
+  border-left: 3px solid var(--accent);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   padding: var(--sp-3) var(--sp-4);
   font-size: var(--fs-body);
@@ -412,8 +440,8 @@ input, select, textarea {
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 .segmented button[aria-checked="true"] {
-  background: linear-gradient(180deg, #d4b45c, var(--gold) 55%, #b3933f);
-  color: #241009;
+  background: var(--accent-gradient);
+  color: var(--on-accent);
   font-weight: 600;
 }
 
@@ -477,7 +505,7 @@ input, select, textarea {
   font-family: var(--font-display);
   font-style: italic;
   font-size: 42px;
-  color: var(--gold);
+  color: var(--accent);
   opacity: 0.85;
   line-height: 1;
 }
@@ -562,7 +590,7 @@ input, select, textarea {
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 .chip--on {
-  background: var(--gold-tint);
+  background: var(--accent-tint);
   color: var(--text);
   border-color: var(--accent-soft);
 }
