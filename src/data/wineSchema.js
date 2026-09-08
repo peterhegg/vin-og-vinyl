@@ -1,24 +1,9 @@
 // Field definitions for one wine. Single source of truth for the data model.
 
-/**
- * Only allow http(s) external links. Blocks javascript:/data:/vbscript: URLs
- * that could otherwise arrive via a malicious import file and execute on click.
- */
-export function safeExternalUrl(value) {
-  if (typeof value !== "string" || !value) return null;
-  try {
-    const u = new URL(value, window.location.origin);
-    return u.protocol === "http:" || u.protocol === "https:" ? u.href : null;
-  } catch {
-    return null;
-  }
-}
+import { safeExternalUrl, safeImageDataUrl } from "../shared/sanitize.js";
 
-/** Only allow inline image data URLs for the label photo. */
-export function safeImageDataUrl(value) {
-  if (typeof value !== "string" || !value) return null;
-  return /^data:image\/(png|jpe?g|webp|gif);base64,/i.test(value) ? value : null;
-}
+// Re-exported so existing imports of these helpers keep working.
+export { safeExternalUrl, safeImageDataUrl };
 
 export const WINE_STATUS = {
   TASTED: "smakt",

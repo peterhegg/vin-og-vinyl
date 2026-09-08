@@ -2,6 +2,7 @@
 
 Levende plan. Oppdateres på slutten av hver fase (kryss av + flytt «Nåværende fase»).
 Enkeltkilde for status. Memory-fil: `project_vin_og_vinyl.md`.
+Arkitekturen er låst i `docs/ARCHITECTURE.md` (ADR-1 … ADR-8) — les den før Fase 2–6.
 
 Gjenoppta i ny chat: kjør `/vinyl-fase` — den leser denne fila og gir deg modell,
 effort, skills og kickoff-melding for neste fase.
@@ -26,16 +27,17 @@ Slå sammen dagens vin-app («Vinkjeller») og en ny vinyl-modul til **én PWA: 
 | Repo/URL | Døp om `vinkjeller` → `vin-og-vinyl`. Ny URL: `peterhegg.github.io/vin-og-vinyl/` |
 | Vinyl-datakilde | Discogs API via Worker-proxy (søk + strekkode + cover) |
 | Vinyl-grading | Goldmine-skala, separat for plate (media) og cover (sleeve) + fritekst |
-| IndexedDB-navn | Beholdes internt (`vinkjeller-db`), kun ny objectStore `records` legges til via versjonsbump. Intern nøkkel, ikke synlig for bruker → ingen migrering nødvendig. Eksport-filnavn endres til `vin-og-vinyl-eksport-*.json`. |
+| IndexedDB-navn | Beholdes internt (`vinkjeller-db`). Versjonsbump v1→v2 legger til `records` + `covers` uten å røre `wines`. Intern nøkkel, ikke synlig for bruker → ingen migrering av eksisterende data. Eksport-filnavn endres til `vin-og-vinyl-eksport-*.json`. |
+| Delt DB-åpner | `src/shared/idb.js` eier `DB_NAME`, `DB_VERSION` og oppgraderingsstigen. Ingen hook åpner basen selv (ADR-3). |
 
-## Vinyl-datamodell (utkast — låses i Fase 2)
+## Vinyl-datamodell (oppdatert etter ADR — låses i Fase 2)
 
-`src/data/recordSchema.js`
+`src/vinyl/recordSchema.js` — se `docs/ARCHITECTURE.md` ADR-4 og ADR-7
 
 | Felt | Type | Kilde |
 |------|------|-------|
 | `id` | uuid | auto |
-| `status` | `"eier"` \| `"ønske"` | bruker |
+| `status` | `"owned"` \| `"wishlist"` | bruker (norsk kun i UI-etikett) |
 | `addedAt` / `acquiredAt` | ISO | auto / bruker |
 | `artist` | string | Discogs/manuell |
 | `title` | string | Discogs/manuell |
@@ -51,7 +53,8 @@ Slå sammen dagens vin-app («Vinkjeller») og en ny vinyl-modul til **én PWA: 
 | `discogsId` | number\|null | Discogs release-id |
 | `discogsUrl` | string (sanert) | lenke til Discogs |
 | `barcode` | string\|null | strekkode |
-| `coverImageBase64` | data-URL (sanert) | lagres på enheten |
+| `coverThumbBase64` | data-URL (sanert), ≤160 px | inline i posten — brukes av lister |
+| *(fullcover)* | egen `covers`-store: `{ id, full }`, ≤800 px | leses av detaljvisning + eksport |
 | `mediaCondition` | Goldmine enum \| null | M, NM, VG+, VG, G+, G, F, P |
 | `sleeveCondition` | Goldmine enum \| null | samme skala |
 | `conditionNotes` | string | bruker |
@@ -64,9 +67,11 @@ Slå sammen dagens vin-app («Vinkjeller») og en ny vinyl-modul til **én PWA: 
 | `plays` | number | valgfri teller |
 | `estimatedValueNOK` | number\|null | valgfri |
 
-Delt kode som trekkes ut i Fase 1–2: `src/data/sanitize.js` (`safeExternalUrl`,
-`safeImageDataUrl` fra `wineSchema.js`), `PhotoCapture`, `BarcodeScanner`,
-`RatingInput` (dagens `CorkRating` generaliseres), `ExportImport`, `FilterBar`.
+Delt kode (full flytteplan i ADR-5): `src/shared/sanitize.js` (`safeExternalUrl`,
+`safeImageDataUrl` — flyttet i Fase 1), `PhotoCapture` (fra `LabelPhoto`), `BarcodeScanner`,
+`RatingInput` (fra `CorkRating`), `SegmentedToggle` (fra `WishlistToggle`), `ExportImport`,
+`FilterShell` (kun skallet av `FilterBar` — feltene forblir domenespesifikke),
+`proxyClient`, `useOnlineStatus`, `idb`.
 
 ---
 
@@ -89,13 +94,16 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 - **Modell:** Opus · **Effort:** think hard · **Egen chat:** ja
 - **Skills:** `architecture`, `engineering:system-design`. Evt. `Plan`-agent for skisse.
 - Avklar: app-skall og navigasjon (topp-nivå Vin/Vinyl-bytte + bunn-nav per samling), delt vs. type-spesifikk komponent-grense, IndexedDB (én db, stores `wines` + `records`, versjonsbump-strategi), eksport/import-format v2, mappe­struktur (`src/wine/`, `src/vinyl/`, `src/shared/`).
-- **Leveranse:** `docs/ARCHITECTURE.md` (ADR), oppdatert datamodell i denne fila, tom `src/data/recordSchema.js` + `src/data/sanitize.js`.
+- **Leveranse:** `docs/ARCHITECTURE.md` (ADR-1 … ADR-8), oppdatert datamodell i denne fila,
+  `src/shared/sanitize.js` (ekte innhold, re-eksportert fra `wineSchema.js`) + `src/vinyl/recordSchema.js` (stubbe med låste enums).
 
 ### Fase 2 — Vinyl-datamodell + IndexedDB-lag
 - **Modell:** Opus · **Effort:** think hard · **Egen chat:** ja (kan dele med Fase 1)
 - **Skills:** ingen
-- `recordSchema.js`: `createRecord`, `normalizeRecord`, `RECORD_KEYS`, Goldmine-enum, format-liste, `clampRating`. XSS-sanering via delt `sanitize.js`.
-- `src/hooks/useRecordDB.js`: speiler `useWineDB` (CRUD, `filterAndSortRecords`, `SORT`, stats). Versjonsbump av IndexedDB som legger til `records`-store uten å røre `wines`.
+- `src/vinyl/recordSchema.js`: `createRecord`, `normalizeRecord`, `RECORD_KEYS`, `clampRating` (enums er alt låst i stubben). XSS-sanering via delt `src/shared/sanitize.js`.
+- `src/shared/idb.js`: felles `openDB()` med versjonsstige v1→v2 (`records` + `covers`). `useWineDB` bytter til denne — ingen hook åpner basen selv (ADR-3).
+- `src/vinyl/useRecordDB.js`: speiler `useWineDB` (CRUD, `filterAndSortRecords`, `SORT`, stats) + cover-håndtering per ADR-4 (miniatyr i posten, fullbilde i `covers`, slettes i samme transaksjon).
+- Verifiser migreringen mot en base som faktisk står på v1.
 - **Leveranse:** grønn manuell CRUD-test i konsoll/enkel harness.
 
 ### Fase 3 — Discogs Worker-proxy + `useDiscogs`-hook
@@ -115,11 +123,14 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 
 ### Fase 5 — Kombinert navigasjon + delt skall + delt Innstillinger
 - **Modell:** Sonnet · **Effort:** medium · **Egen chat:** nei (samme som Fase 4)
-- `App.jsx` blir ruter: topp-nivå segmentkontroll Vin/Vinyl, egen bunn-nav per samling, felles Innstillinger (eksport/import av begge), kombinert forside/statistikk.
+- `App.jsx` blir skall: segmentkontroll Vin/Vinyl, bunn-nav (Samling · Legg til · Innstillinger), felles Innstillinger (eksport/import av begge). Ingen egen forside — kombinert tellelinje under segmentet (ADR-2).
+- `src/shared/useNav.js` med History API så Android-tilbakeknappen popper skjermbilder.
+- Mekanisk flytting av vin-filene til `src/wine/` + omdøping `.wine-card` → `.item-card`, som egne commits (ADR-1, ADR-8).
 
 ### Fase 6 — Eksport/import v2
 - **Modell:** Opus · **Effort:** medium · **Egen chat:** nei (m/ Fase 3 eller 5)
-- Format `{ version: 2, wines: [], records: [] }`. Bakoverkompatibel import av v1 (kun `wines`). Sanering på begge typer ved import.
+- `src/shared/backup.js`: format `{ app, version: 2, exportedAt, wines: [], records: [] }`. Bakoverkompatibel lesing av v1 (naken array eller `{ wines }`). Sanering på begge typer. Import i én transaksjon over `wines` + `records` + `covers`. Eksport materialiserer fullcover; import splitter tilbake (ADR-6).
+- Bygg blob-en stykkevis — én `JSON.stringify` på hele samlingen kan slå ut på telefon.
 
 ### Fase 7 — Tema + ikoner rebrand
 - **Modell:** Fable · **Effort:** medium · **Egen chat:** ja
@@ -159,7 +170,7 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 ## Fremdrift
 
 - [x] Fase 0 — Rebrand + repo-rename ✓ 2026-09-08
-- [ ] Fase 1 — Arkitektur (ADR)
+- [x] Fase 1 — Arkitektur (ADR) ✓ 2026-09-08
 - [ ] Fase 2 — Vinyl-datamodell + DB
 - [ ] Fase 3 — Discogs-proxy
 - [ ] Fase 4 — Vinyl-UI
@@ -171,12 +182,19 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 - [ ] Fase 10 — Test
 - [ ] Fase 11 — Deploy-handoff
 
-**Nåværende fase:** Fase 1 — Arkitektur (ADR). Bytt til Opus, think hard.
+**Nåværende fase:** Fase 2 — Vinyl-datamodell + IndexedDB-lag. Opus, think hard.
 
 Fase 0 gjort: navn byttet i alle filer (DB_NAME bevisst beholdt), repo renamet på
 GitHub til `vin-og-vinyl` (remote oppdatert, redirect aktiv), prod-bygg verifisert
 med base `/vin-og-vinyl/`. Gjenstår for bruker (Fase 11): redeploy Worker som
 `vin-og-vinyl-proxy` + oppdater repo-secret `VITE_PROXY_URL`.
+
+Fase 1 gjort: `docs/ARCHITECTURE.md` med ADR-1 … ADR-8. Fire avvik fra den opprinnelige
+planen, dokumentert i ADR-ens «Avvik»-tabell og innarbeidet her: nye filstier
+(`src/vinyl/`, `src/shared/` i stedet for `src/data/`), coverbilder splittet i
+miniatyr + `covers`-store, `covers` som ekstra objectstore, og engelske statusverdier
+(`"owned"` / `"wishlist"`). `src/shared/sanitize.js` og `src/vinyl/recordSchema.js`
+opprettet, prod-bygg fortsatt grønt.
 
 ## Per-fase kickoff-meldinger
 
