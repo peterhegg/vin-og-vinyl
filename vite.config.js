@@ -8,10 +8,13 @@ import { VitePWA } from "vite-plugin-pwa";
  * unrecognised source expression is simply dropped — so a build without it ships
  * a bundle where connect-src is 'self' and every proxy call is blocked, with no
  * error anywhere but the browser console. Fail the build instead.
+ *
+ * Only on `build`: `vite preview` also runs in production mode but produces
+ * nothing — it just serves whatever dist/ already holds.
  */
-function requireProxyUrl(mode) {
+function requireProxyUrl(mode, command) {
   const { VITE_PROXY_URL } = loadEnv(mode, process.cwd(), "VITE_");
-  if (mode === "production" && !VITE_PROXY_URL) {
+  if (command === "build" && mode === "production" && !VITE_PROXY_URL) {
     throw new Error(
       "VITE_PROXY_URL is not set. The production CSP needs it in connect-src — " +
         "set it in .env or as a build secret before building."
@@ -19,8 +22,8 @@ function requireProxyUrl(mode) {
   }
 }
 
-export default defineConfig(({ mode }) => {
-  requireProxyUrl(mode);
+export default defineConfig(({ mode, command }) => {
+  requireProxyUrl(mode, command);
   return {
     base: "/vin-og-vinyl/",
     plugins: [

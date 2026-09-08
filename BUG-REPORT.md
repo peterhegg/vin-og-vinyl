@@ -169,10 +169,11 @@ Discogs-lenker. URL-en parses nå uten base (absolutt eller ingenting), og
 **Status:** ✅ fikset
 
 Ingen av de to arver fra `default-src`, så `default-src 'none'` dekket dem ikke. Begge
-satt til `'none'`. `frame-ancestors` er beholdt, men **ignoreres i en meta-CSP** — den
-krever en ekte header, som GitHub Pages ikke kan sende. Appen har verken sesjon eller
-server-side handling som er verdt å ramme inn, så restrisikoen er akseptert og
-dokumentert i en kommentar i fila.
+satt til `'none'`. `frame-ancestors` er samtidig **fjernet**: den ignoreres i en
+meta-CSP (den virker bare som ekte header, som GitHub Pages ikke kan sende), og Fase 10
+viste at den kostet en konsolladvarsel ved hver eneste sidelast uten å gi noe tilbake.
+Appen har verken sesjon eller server-side handling som er verdt å ramme inn, så
+restrisikoen er akseptert og dokumentert i en kommentar i fila.
 
 ---
 

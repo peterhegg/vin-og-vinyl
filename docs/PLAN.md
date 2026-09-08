@@ -211,11 +211,11 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 - [x] Fase 6 — Eksport/import v2 ✓ 2026-09-08
 - [x] Fase 7 — Tema + ikoner ✓ 2026-09-08
 - [x] Fase 8 — Polish ✓ 2026-09-08
-- [ ] Fase 9 — Sikkerhet
-- [ ] Fase 10 — Test
+- [x] Fase 9 — Sikkerhet ✓ 2026-09-09
+- [x] Fase 10 — Test ✓ 2026-09-09
 - [ ] Fase 11 — Deploy-handoff
 
-**Nåværende fase:** Fase 9 — Sikkerhetsgjennomgang. Opus, think hard. /sikkerhetsanalyse så /bugreview.
+**Nåværende fase:** Fase 11 — Deploy-handoff + memory. Sonnet, low.
 
 Fase 0 gjort: navn byttet i alle filer (DB_NAME bevisst beholdt), repo renamet på
 GitHub til `vin-og-vinyl` (remote oppdatert, redirect aktiv), prod-bygg verifisert
@@ -346,6 +346,62 @@ nettleser (mobil-viewport): landemerke + fokusflyt add→skjema→detalj, rating
 **Ikke gjort (flagget til Fase 10):** etter «Lagre» i skjema lander man på «Legg til»-
 skjermen, ikke på lista (useNav-semantikk fra Fase 5 — nav-endring er for risikabel i en
 polish-fase). `📷`-knappen i søk er fortsatt emoji (gjenkjennelig + har `aria-label`).
+
+Fase 9 gjort: `/sikkerhetsanalyse` + `/bugreview`, full rapport i `BUG-REPORT.md`.
+13 funn, 11 fikset. Alt verifisert i nettleser eller mot mocket oppstrøm, ikke bare lest.
+
+**Kritisk (nytt, ikke i planen):** typeforvirring fra importfil kunne ta ned appen for
+godt. `createRecord`/`createWine` slapp objekter gjennom i tekstfelt, React kaster på et
+objekt som barn, raden ligger i IndexedDB → hvit skjerm som overlever reload. Fikset ved å
+flytte **all** felt-tvang inn i `createRecord`/`createWine` — porten *alle* skriveveier går
+gjennom; en sjekk kun i `normalizeRecord` var omgåelig via `dbPutRecord`. Nye delte
+hjelpere i `shared/sanitize.js` (`safeText`, `safeTextOrNull`, `safeNumber`, `safeCount`,
+`safeId`, `safeIsoDate`) + `shared/components/ErrorBoundary.jsx` som siste skanse.
+
+**Høy:** importen var ikke atomisk likevel. `put()` kaster *synkront* på en verdi
+IndexedDB ikke kan lagre, og de allerede køede skrivingene committer uansett — målt:
+tre puts, nummer to kaster, rad én ble liggende. Kø-løkka aborter nå transaksjonen.
+**Høy:** fullcover (~64 kB) ble skjøvet inn i history-state ved hver skjema-åpning;
+Firefox kaster fra `pushState` når kvoten er brukt opp. Bildet holdes nå utenfor
+historikken (token i `useNav`), `history.state` gikk fra ~72 000 til 8 271 tegn.
+
+**Middels:** 64 MB-tak på importfil; egen rate-limit-bøtte for avviste kall i Workeren
+(token-sjekken gikk før budsjettet, så en fremmed kunne brenne kvoten gratis);
+cover-taket håndheves på bytene som passerer, ikke bare på `Content-Length`;
+produksjonsbygget avbryter hvis `VITE_PROXY_URL` mangler (CSP-plassholderen degraderte
+stille til `connect-src 'self'` og blokkerte alle proxy-kall — `dist/` inneholdt nøyaktig
+det). **Lav:** `safeExternalUrl` krever nå absolutt URL; `base-uri`/`form-action` lagt til;
+`npm audit fix` (5 høye, alle i devDependencies); død `debug`-state i `useBarcode` fjernet
+(re-rendret skanneroverlayet 6 ganger i sekundet); `PhotoCapture` sier fra ved feil.
+
+**Planens tre mistanker, avklart:** prototypeforurensning er *ikke* utnyttbar (verifisert
+med `__proto__`/`constructor` i ekte importfil — `JSON.parse` lager egen nøkkel, og
+`createRecord` leser kun navngitte felt). Manglende størrelsesgrense var ekte → fikset.
+`saveBlob`s 60 s object-URL lekker ikke. Cover-sletting ved overskriving beholdt som
+bevisst — den er dokumentert i importteksten.
+
+Fase 10 gjort: Playwright i scratchpad mot **prod-bundelen** (`vite preview`, base
+`/vin-og-vinyl/`), Discogs- og Vinmonopolet-proxyen mocket på nettverksnivå. 58 assertions
+grønne: app-skall, vin-CRUD, Discogs-autofyll m/ cover, back-stack, hele eksport→tøm→import-
+rundturen med en **ekte nedlastet fil** (fullcover materialisert og gjenopprettet), alle
+fire feilmeldingene, service worker + manifest + ikoner, offline-last fra cache, og null
+CSP-brudd og null ubehandlede sidefeil gjennom hele kjøringen.
+
+**To ekte funn:**
+1. Fase 9-vakten i `vite.config.js` blokkerte også `vite preview` — den kjører i
+   production mode, men bygger ingenting. Gated på `command === "build"`.
+2. `frame-ancestors` i meta-CSP-en ga en konsolladvarsel ved **hver** sidelast uten å ha
+   noen effekt (direktivet virker kun som ekte header, som GitHub Pages ikke kan sende).
+   Fjernet; begrunnelsen står i en kommentar i `index.html`.
+
+**Avklart, ikke en bug:** «Lagre» fra en detaljvisning lander tilbake på detaljen (ikke på
+lista) — det er `onBack()`-semantikken fra Fase 5 og er riktig der. Fra «Legg til»-fanen
+lander man fortsatt på søkeskjermen; det står som åpent punkt i `BUG-REPORT.md`.
+
+Tema-tokens verifisert programmatisk: vin `#c9a84c` + burgunder, vinyl `#c8955a` + grafitt
+`#22161e`/`#2c2228`, Innstillinger nøytral gull. Harness-gotchaene fra planen holdt, pluss
+en ny: Chromium gjenoppretter `history.state` ved navigasjon til samme URL, så en test som
+vil starte på forsiden må nullstille state og laste på nytt.
 
 ## Fast praksis (etablert Fase 0–6, gjelder resten)
 

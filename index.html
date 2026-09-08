@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
     <!--
       base-uri and form-action do not fall back to default-src, so they have to be
-      named. frame-ancestors is ignored in a meta CSP (it needs a real header, which
-      GitHub Pages cannot send) — it is kept for hosts that can, and the app carries
-      no session or server-side action worth framing.
+      named. frame-ancestors is deliberately absent: it is ignored in a meta CSP
+      (it only works as a real header, which GitHub Pages cannot send), so listing
+      it bought nothing but a console warning on every load. There is no session
+      and no server-side action here that framing the page could abuse.
     -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' %VITE_PROXY_URL%; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' %VITE_PROXY_URL%; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none';" />
     <meta name="theme-color" content="#6B2737" />
     <title>Vin og vinyl</title>
     <link rel="icon" type="image/png" href="/vin-og-vinyl/icons/favicon.png" />
