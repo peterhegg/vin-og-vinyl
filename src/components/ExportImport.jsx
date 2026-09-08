@@ -21,7 +21,7 @@ export default function ExportImport({ wines, onImport }) {
   const [result, setResult] = useState(null); // { added, updated } | { error }
 
   const handleExport = () => {
-    downloadJson(`vinkjeller-eksport-${todayStr()}.json`, { wines });
+    downloadJson(`vin-og-vinyl-eksport-${todayStr()}.json`, { wines });
   };
 
   const handleFile = async (e) => {
@@ -63,7 +63,7 @@ export default function ExportImport({ wines, onImport }) {
           Last ned hele kjelleren som én JSON-fil. Etikettbilder er inkludert, så ingenting går tapt.
         </p>
         <button type="button" className="btn btn-ghost" onClick={handleExport} disabled={!wines.length}>
-          ↓ Last ned vinkjeller-eksport
+          ↓ Last ned vin-og-vinyl-eksport
         </button>
       </div>
 
@@ -80,7 +80,7 @@ export default function ExportImport({ wines, onImport }) {
         <input ref={fileRef} type="file" accept="application/json" hidden onChange={handleFile} />
 
         <div aria-live="polite">
-          {result?.error && <p className="error-text">Fila kunne ikke leses. Sjekk at det er en gyldig Vinkjeller-eksport.</p>}
+          {result?.error && <p className="error-text">Fila kunne ikke leses. Sjekk at det er en gyldig Vin og vinyl-eksport.</p>}
           {result && !result.error && (
             <p style={{ color: result.added + result.updated > 0 ? "var(--success)" : "var(--text-soft)", fontSize: 14, fontWeight: 500 }}>
               {result.added === 0 && result.updated === 0

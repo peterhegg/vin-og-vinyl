@@ -86,7 +86,7 @@ export default function App() {
       ) : tab === "cellar" ? (
         <div className="stack">
           <div className="screen-header">
-            <h1 className="screen-title--hero">Vinkjeller</h1>
+            <h1 className="screen-title--hero">Vin og vinyl</h1>
             <span className="stats-line">
               <strong>{stats.tasted}</strong> smakt · <strong>{stats.bottles}</strong> flasker
             </span>

@@ -1,5 +1,5 @@
 /**
- * Vinkjeller proxy — hides the Vinmonopolet subscription key and adds CORS.
+ * Vin og vinyl proxy — hides the Vinmonopolet subscription key and adds CORS.
  *
  * Secrets (set with `wrangler secret put ...`):
  *   VINMONOPOLET_KEY   Ocp-Apim-Subscription-Key from developer.vinmonopolet.no

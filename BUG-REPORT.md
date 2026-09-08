@@ -1,4 +1,4 @@
-# Bug-rapport — Vinkjeller
+# Bug-rapport — Vin og vinyl
 
 Gjennomgang før deploy. React 18 + Vite + PWA (Workbox injectManifest) +
 IndexedDB, Cloudflare Worker-proxy, GitHub Pages. Ingen kritiske eller høye
