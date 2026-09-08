@@ -413,8 +413,19 @@ etter deploy (inkl. PWA-installasjon og flymodus) og en feilsøkingstabell fra s
 årsak. README oppdatert: status, `src/data/` → `src/wine/` i datamodell-avsnittet, og en
 dokumentasjonstabell over de fem `docs/`-filene.
 
-Merk at den gamle `vinkjeller-proxy`-Workeren fortsatt lever ved siden av den nye —
-`DEPLOY.md` sier hvordan og når den kan slettes.
+**Sjekket den faktiske tilstanden i stedet for å anta den, og det endret handoffen:**
+appen er *allerede live* på peterhegg.github.io/vin-og-vinyl/ — Pages, repo-secrets og
+workflowen har stått siden Vinkjeller-tida, og Fase 8-kjøringen var grønn. Det som
+mangler er bare Workeren: `VITE_PROXY_URL` peker fortsatt på `vinkjeller-proxy`, som ble
+deployet før både Discogs-rutene (Fase 3) og sikkerhetsfiksene (Fase 9) fantes, og
+`vin-og-vinyl-proxy` er ikke deployet i det hele tatt (svarer 404). Vinsøk virker derfor
+live i dag, vinylsøk gjør det ikke. `DEPLOY.md` leder med den tilstanden og sier «hopp til
+steg 3» i stedet for å be brukeren gjøre om igjen det som alt er gjort.
+
+To fallgruver dokumentert som følge av det: Worker-secrets følger *Workeren*, ikke kontoen
+— `VINMONOPOLET_KEY` må settes på nytt på den nye Workeren, ellers mister man vinsøket i
+flyttingen. Og `VITE_PROXY_URL` bakes inn i bundelen ved bygging, så en endret secret
+krever en ny workflow-kjøring for å få effekt.
 
 ## Fast praksis (etablert Fase 0–6, gjelder resten)
 

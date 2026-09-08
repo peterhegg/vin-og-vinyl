@@ -1,13 +1,30 @@
-# Deploy — sjekkliste for å få «Vin og vinyl» live
+# Deploy — hva som gjenstår for «Vin og vinyl»
 
-Koden er ferdig og pushet. Det som gjenstår er syv steg som krever *dine* kontoer og
-nøkler — de kan ikke gjøres av en agent, og appen er med vilje ikke live før du har
-gjort dem.
+## Hvor det står nå (sjekket 2026-09-09)
 
-Rekkefølgen betyr noe: steg 3–5 må være gjort før steg 7, ellers bygger workflowen
-mot feil proxy.
+**Appen er allerede live: https://peterhegg.github.io/vin-og-vinyl/**
 
-Appen ender opp på **https://peterhegg.github.io/vin-og-vinyl/**
+GitHub Pages, repo-secrets og deploy-workflowen er på plass fra Vinkjeller-tida og
+kjører grønt på hver push. Det som **ikke** er på plass er Workeren:
+
+| | Status |
+|---|---|
+| Appen på GitHub Pages | ✅ live, bygger automatisk på push til `main` |
+| Repo-secrets `VITE_PROXY_URL` + `VITE_APP_TOKEN` | ✅ satt |
+| Vinsøk (Vinmonopolet) | ✅ virker — gamle Workeren har `VINMONOPOLET_KEY` |
+| **Vinylsøk (Discogs)** | ❌ **virker ikke ennå** |
+| Workerens sikkerhetsfikser fra Fase 9 | ❌ ikke deployet |
+
+Grunnen til begge ❌-ene er den samme: `VITE_PROXY_URL` peker fortsatt på
+`vinkjeller-proxy.peterhegg.workers.dev`, som ble deployet **før** Discogs-rutene og
+sikkerhetsfiksene fantes. Den nye `vin-og-vinyl-proxy` er ikke deployet i det hele tatt
+(svarer 404).
+
+Så: **hopp til steg 3.** Steg 1–2 er forarbeid, steg 6 er valgfritt.
+
+Alt annet i appen virker allerede live i dag — registrering, filtrering, tilstands­grading,
+sikkerhetskopi, offline, PWA-installasjon. Vinyl kan legges inn manuelt; det er bare
+Discogs-autofyllet som mangler.
 
 ---
 
@@ -61,7 +78,8 @@ wrangler secret put DISCOGS_TOKEN
 
 Lim inn tokenet fra steg 2 når den spør.
 
-Har du ikke satt de to andre fra før (fra Vinkjeller-tida), gjør dem nå også:
+De to andre må settes på nytt selv om de finnes på den gamle Workeren — **secrets følger
+Workeren, ikke kontoen**, og `vin-og-vinyl-proxy` er en ny Worker:
 
 ```bash
 wrangler secret put VINMONOPOLET_KEY
@@ -69,8 +87,10 @@ wrangler secret put CLIENT_TOKEN
 ```
 
 - `VINMONOPOLET_KEY` er `Ocp-Apim-Subscription-Key` fra https://developer.vinmonopolet.no
-- `CLIENT_TOKEN` er en verdi du finner på selv. Lag den med `openssl rand -hex 32`, og
-  **ta vare på den** — nøyaktig samme verdi skal inn som `VITE_APP_TOKEN` i steg 5.
+- `CLIENT_TOKEN` **må være samme verdi som repo-secreten `VITE_APP_TOKEN` allerede har**
+  (satt 2026-07-10). Bruk den gamle verdien hvis du har den lagret — da slipper du å røre
+  `VITE_APP_TOKEN` i steg 5. Har du den ikke, lag en ny med `openssl rand -hex 32` og
+  oppdater `VITE_APP_TOKEN` til den samme.
 
 Sjekk hva som ligger der:
 
@@ -112,12 +132,13 @@ curl -s -H "Authorization: Bearer <CLIENT_TOKEN>" \
 
 ## 5. Repo-secrets på GitHub
 
-Settings → Secrets and variables → **Actions**. To stykker:
+Begge finnes allerede, men **`VITE_PROXY_URL` peker på den gamle Workeren og må
+oppdateres.** Settings → Secrets and variables → **Actions**:
 
-| Navn | Verdi |
-|---|---|
-| `VITE_PROXY_URL` | Worker-URL-en fra steg 4, uten skråstrek på slutten |
-| `VITE_APP_TOKEN` | Nøyaktig samme verdi som `CLIENT_TOKEN` i steg 3 |
+| Navn | Verdi | Må endres? |
+|---|---|---|
+| `VITE_PROXY_URL` | Worker-URL-en fra steg 4, uten skråstrek på slutten | **Ja** — står nå på `vinkjeller-proxy` |
+| `VITE_APP_TOKEN` | Nøyaktig samme verdi som `CLIENT_TOKEN` i steg 3 | Bare hvis du lagde et nytt `CLIENT_TOKEN` |
 
 Eller fra terminalen:
 
@@ -144,21 +165,31 @@ så `wrangler deploy` på nytt.
 
 ## 7. GitHub Pages og første kjøring
 
-1. Settings → **Pages** → *Source* skal stå på **GitHub Actions** (ikke «Deploy from a
-   branch»). Den innstillingen overlevde omdøpingen, men sjekk den.
-2. Actions-fanen → workflowen **«Deploy til GitHub Pages»** → **Re-run all jobs** på
-   siste kjøring. (Eller bare push en commit til `main` — den trigger på push.)
-3. Kjøringen skal være grønn. Blir den rød på steget «Validate required secrets», mangler
-   en av secretsene fra steg 5.
+Pages er allerede satt opp riktig (*Source* = **GitHub Actions**) og siste kjøring er
+grønn — det bekrefter seg selv ved at appen er live.
 
-Åpne https://peterhegg.github.io/vin-og-vinyl/ når kjøringen er ferdig.
+Men **`VITE_PROXY_URL` bakes inn i bundelen ved bygging**, så en endring av secreten i
+steg 5 får ingen effekt før appen bygges på nytt:
+
+```bash
+gh workflow run "Deploy til GitHub Pages" --ref main
+```
+
+Eller: Actions-fanen → **«Deploy til GitHub Pages»** → **Re-run all jobs** på siste kjøring.
+
+Kjøringen skal være grønn. Blir den rød på steget «Validate required secrets», mangler en
+av secretsene fra steg 5.
+
+Åpne https://peterhegg.github.io/vin-og-vinyl/ når kjøringen er ferdig — hardlast
+(Ctrl/Cmd+Shift+R) første gang, service workeren serverer ellers den gamle bundelen.
 
 ---
 
 ## Sjekk at det virker
 
-- [ ] Sida laster og viser Vin/Vinyl-segmentet
-- [ ] **Vin → Legg til → søk** på f.eks. «barolo» gir treff (bekrefter `VINMONOPOLET_KEY`)
+- [ ] Sida laster og viser Vin/Vinyl-segmentet *(virker allerede i dag)*
+- [ ] **Vin → Legg til → søk** på f.eks. «barolo» gir treff (bekrefter `VINMONOPOLET_KEY`
+      på den **nye** Workeren — dette er testen på at du ikke mistet vinsøket i flyttingen)
 - [ ] **Vinyl → Legg til → søk** på f.eks. «talk talk» gir treff med cover (bekrefter `DISCOGS_TOKEN`)
 - [ ] Ingen røde CSP-meldinger i nettleserkonsollen (bekrefter `VITE_PROXY_URL`)
 - [ ] Legg inn én plate, gå til **Innstillinger → Last ned sikkerhetskopi**, sjekk at fila
@@ -178,6 +209,8 @@ så `wrangler deploy` på nytt.
 | Alle søk gir 401 | `VITE_APP_TOKEN` ≠ `CLIENT_TOKEN` |
 | Sida er blank / 404 | Pages-kilden står på «branch» i stedet for «GitHub Actions» |
 | Gammel versjon vises etter deploy | Service workeren har cachet den. Last hardt (Ctrl/Cmd+Shift+R) eller lukk og åpne PWA-en |
+| Vinsøk sluttet å virke etter flyttingen | `VINMONOPOLET_KEY` ble ikke satt på den nye Workeren (steg 3) — secrets følger Workeren, ikke kontoen |
+| Vinylsøk gir `not_found` i stedet for treff | `VITE_PROXY_URL` peker fortsatt på `vinkjeller-proxy`, som ikke har Discogs-ruter |
 
 Feilkodene Workeren svarer med er dokumentert i `README.md` under *Discogs-API*, og
 sikkerhetsvalgene bak dem i `BUG-REPORT.md`.
