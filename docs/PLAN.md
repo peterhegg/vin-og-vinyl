@@ -213,9 +213,10 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 - [x] Fase 8 — Polish ✓ 2026-09-08
 - [x] Fase 9 — Sikkerhet ✓ 2026-09-09
 - [x] Fase 10 — Test ✓ 2026-09-09
-- [ ] Fase 11 — Deploy-handoff
+- [x] Fase 11 — Deploy-handoff ✓ 2026-09-09
 
-**Nåværende fase:** Fase 11 — Deploy-handoff + memory. Sonnet, low.
+**Nåværende fase:** ingen — alle 12 faser er ferdige. Koden er komplett og pushet.
+Det som gjenstår er brukerens egne nøkler og deploy: **`docs/DEPLOY.md`**.
 
 Fase 0 gjort: navn byttet i alle filer (DB_NAME bevisst beholdt), repo renamet på
 GitHub til `vin-og-vinyl` (remote oppdatert, redirect aktiv), prod-bygg verifisert
@@ -402,6 +403,18 @@ Tema-tokens verifisert programmatisk: vin `#c9a84c` + burgunder, vinyl `#c8955a`
 `#22161e`/`#2c2228`, Innstillinger nøytral gull. Harness-gotchaene fra planen holdt, pluss
 en ny: Chromium gjenoppretter `history.state` ved navigasjon til samme URL, så en test som
 vil starte på forsiden må nullstille state og laste på nytt.
+
+Fase 11 gjort: `docs/DEPLOY.md` — syv nummererte steg (repo-navn, Discogs-token,
+Worker-secrets, `wrangler deploy`, repo-secrets, valgfri KV-rate-limit, Pages + re-run),
+hver med den faktiske kommandoen og en `curl`-røyktest mot Workeren. I tillegg en tabell
+over **hva som virker uten hvert steg** — det er ikke alt-eller-ingenting, og uten
+`DISCOGS_TOKEN` er det bare vinyl-søket som faller ut. Egen sjekkliste for verifisering
+etter deploy (inkl. PWA-installasjon og flymodus) og en feilsøkingstabell fra symptom til
+årsak. README oppdatert: status, `src/data/` → `src/wine/` i datamodell-avsnittet, og en
+dokumentasjonstabell over de fem `docs/`-filene.
+
+Merk at den gamle `vinkjeller-proxy`-Workeren fortsatt lever ved siden av den nye —
+`DEPLOY.md` sier hvordan og når den kan slettes.
 
 ## Fast praksis (etablert Fase 0–6, gjelder resten)
 

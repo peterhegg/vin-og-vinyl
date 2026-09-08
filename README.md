@@ -5,7 +5,9 @@ Personlig samlings-PWA for **vin og vinyl** på ett sted. Alt lagres lokalt på 
 - **Vin:** søk opp viner fra Vinmonopolet (eller skann strekkode / legg inn manuelt), gi dine egne korkpoeng og smaksnotater, hold styr på lageret ditt og ønskelista.
 - **Vinyl:** registrer plater du eier og plater på ønskelista, med data fra Discogs (artist, album, år, trykk, plateselskap, katalognr, format), tilstands­grading og egne notater.
 
-> Status: vin-delen er ferdig. Vinyl-delen er under utvikling — se `docs/PLAN.md` for faseplan.
+> **Status:** ferdig bygget — begge samlinger, sikkerhetsgjennomgått og testet mot
+> prod-bundelen. Det som gjenstår er dine egne nøkler og deploy:
+> se **[`docs/DEPLOY.md`](docs/DEPLOY.md)**.
 
 ## Stack
 
@@ -106,7 +108,7 @@ ikke ekte autentisering — derfor rate-limit i tillegg.
 
 ## Datamodell
 
-- Én vin følger `src/data/wineSchema.js`: Vinmonopolet-felter, egne smaksnotater og lagerstyring (`quantity`, `cellarLocation`, `drinkFrom` / `drinkBy`).
+- Én vin følger `src/wine/wineSchema.js`: Vinmonopolet-felter, egne smaksnotater og lagerstyring (`quantity`, `cellarLocation`, `drinkFrom` / `drinkBy`).
 - Én plate følger `src/vinyl/recordSchema.js`: Discogs-felter, Goldmine-tilstand for plate og cover, egne notater og kjøpsdata.
 - Arkitekturen bak oppdelingen står i `docs/ARCHITECTURE.md`.
 
@@ -116,4 +118,24 @@ Under Innstillinger kan du eksportere hele samlingen til én JSON-fil (`vin-og-v
 
 ## Deploy
 
-Push til `main` → GitHub Actions bygger og publiserer til GitHub Pages automatisk (`.github/workflows/deploy.yml`).
+Push til `main` → GitHub Actions bygger og publiserer til GitHub Pages automatisk
+(`.github/workflows/deploy.yml`). Workflowen avbryter hvis `VITE_PROXY_URL` eller
+`VITE_APP_TOKEN` mangler som repo-secret.
+
+Førstegangsoppsett — Discogs-token, Worker-secrets, repo-secrets, Pages-innstilling:
+**[`docs/DEPLOY.md`](docs/DEPLOY.md)**.
+
+`VITE_PROXY_URL` skrives inn i appens `connect-src`-CSP ved bygging, så et
+produksjonsbygg uten den avbryter i stedet for å produsere en bundel der alle
+proxy-kall blir blokkert av nettleseren.
+
+## Dokumentasjon
+
+| Fil | Innhold |
+|---|---|
+| `docs/PLAN.md` | Faseplan og status — enkeltkilde for hvor prosjektet står |
+| `docs/ARCHITECTURE.md` | ADR-1 … ADR-8, den bindende arkitekturen |
+| `docs/THEME.md` | Fargetokens, «Kjeller og grafitt» |
+| `docs/ICON_PHILOSOPHY.md` | Ikonspråk og hvordan PNG-ene rasteres fra SVG |
+| `docs/DEPLOY.md` | Sjekkliste for å få appen live |
+| `BUG-REPORT.md` | Sikkerhets- og buggjennomgang fra Fase 9 |
