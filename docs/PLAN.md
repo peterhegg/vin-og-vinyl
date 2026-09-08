@@ -109,9 +109,12 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 ### Fase 3 — Discogs Worker-proxy + `useDiscogs`-hook
 - **Modell:** Opus · **Effort:** ultrathink på proxy-sikkerhet, ellers think hard · **Egen chat:** ja
 - **Skills:** `debug` ved behov
-- Utvid `cloudflare-worker.js`: ruter for `GET /discogs/search?q=` og `GET /discogs/release/:id` og `GET /discogs/barcode?ean=`. Discogs-token som Worker-secret `DISCOGS_TOKEN` (aldri i klient). Behold `CLIENT_TOKEN`-gate + valgfri KV-rate-limit. Legg på `User-Agent` (Discogs krever det). Håndter 429 fra Discogs (60 req/min).
-- Cover: Worker henter release-bilde og returnerer som base64 (Discogs-bilde-URL-er trenger token/hotlink-vern) — klienten lagrer base64.
-- `src/hooks/useDiscogs.js`: `search(query)`, `lookupByBarcode(ean)`, `getRelease(id)`, `mapReleaseToRecord()`.
+- `cloudflare-worker.js`: ruter `GET /discogs/search?q=`, `/discogs/barcode?ean=`, `/discogs/release/<id>`, `/discogs/cover/<id>`. `DISCOGS_TOKEN` som Worker-secret (aldri i klient). `CLIENT_TOKEN`-gate + KV-rate-limit beholdt (60 API/min, 30 cover/min). `User-Agent` påkrevd av Discogs. 429 videreformidles med `Retry-After`.
+- Ruting matcher på siste path-segmenter, ikke `endsWith` — `/search` ville ellers slukt `/discogs/search`.
+- Svar projiseres på en fast feltliste i Workeren (release ~150 kB → ~1 kB). Cache i Workeren: søk 1 t, release 1 døgn, cover 30 dager.
+- Cover returneres som **bildebytes**, ikke base64 (avvik fra opprinnelig plan): strømmes gjennom uten buffering, klienten gjør blob → `compressImage` → data-URL. Bilde-URL-en kommer alltid fra Discogs' eget svar og verten sjekkes mot allowlist; redirects, feil MIME og >5 MB avvises.
+- `src/vinyl/useDiscogs.js`: `search`, `lookupByBarcode`, `getRelease`, `getCover`, `mapReleaseToRecord`, `splitCombinedTitle`.
+- `src/shared/proxyClient.js` trukket ut av `useVinmonopolet` og delt av begge (ADR-5).
 - Oppdater `.env.example`, README API-seksjon, `wrangler.toml`. Ingen ny klient-secret.
 - **Leveranse:** ende-til-ende søk mot ekte Discogs (bruker må ha lagt inn token — kan stubbes til Fase 11, da med mock).
 
@@ -172,7 +175,7 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 - [x] Fase 0 — Rebrand + repo-rename ✓ 2026-09-08
 - [x] Fase 1 — Arkitektur (ADR) ✓ 2026-09-08
 - [x] Fase 2 — Vinyl-datamodell + DB ✓ 2026-09-08
-- [ ] Fase 3 — Discogs-proxy
+- [x] Fase 3 — Discogs-proxy ✓ 2026-09-08
 - [ ] Fase 4 — Vinyl-UI
 - [ ] Fase 5 — Kombinert navigasjon
 - [ ] Fase 6 — Eksport/import v2
@@ -182,7 +185,7 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 - [ ] Fase 10 — Test
 - [ ] Fase 11 — Deploy-handoff
 
-**Nåværende fase:** Fase 3 — Discogs Worker-proxy + `useDiscogs`. Opus, ultrathink på proxy-sikkerhet.
+**Nåværende fase:** Fase 4 — Vinyl-UI. Sonnet, think. Egen chat.
 
 Fase 0 gjort: navn byttet i alle filer (DB_NAME bevisst beholdt), repo renamet på
 GitHub til `vin-og-vinyl` (remote oppdatert, redirect aktiv), prod-bygg verifisert
@@ -202,6 +205,14 @@ Fase 2 gjort: `src/shared/idb.js` (delt åpner, versjonsstige v1→v2), `src/sha
 `useWineDB` bruker nå den delte åpneren. Verifisert i nettleser mot en base som faktisk
 sto på v1: 54 assertions grønne — migrering bevarer viner og indekser, cover-splitting,
 sanering av fiendtlig import-input, filter/sortering, og vin-siden uten regresjon.
+
+Fase 3 gjort: Discogs-ruter i Workeren + `src/vinyl/useDiscogs.js` + delt
+`src/shared/proxyClient.js`. 59 assertions mot mocket oppstrøm (scratchpad, ikke i repo)
+dekker SSRF på syv angreps-URL-er, token-lekkasje, CORS, input-validering, 429/Retry-After
+og at Vinmonopolet-ruten er uendret. **Fant og fikset en ekte rutingsbug:** `/discogs/search`
+traff Vinmonopolet-ruten fordi `endsWith("/search")` også matcher den. Rutingen matcher nå
+path-segmenter. Gjenstår for bruker (Fase 11): `wrangler secret put DISCOGS_TOKEN` + redeploy —
+uten den svarer Discogs-rutene 503 mens vin-søket virker som før.
 
 ## Per-fase kickoff-meldinger
 

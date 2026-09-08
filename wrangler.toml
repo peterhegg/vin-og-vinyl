@@ -8,9 +8,11 @@ ALLOWED_ORIGINS = "https://peterhegg.github.io,http://localhost:5173"
 
 # Secrets are NOT stored here. Set them with:
 #   wrangler secret put VINMONOPOLET_KEY
+#   wrangler secret put DISCOGS_TOKEN
 #   wrangler secret put CLIENT_TOKEN
 
-# Optional: per-IP rate limiting (60 req/min). Create the namespace with
+# Optional but recommended once Discogs is in use: per-IP rate limiting
+# (60 API req/min, 30 cover req/min — Discogs itself allows 60/min in total). Create the namespace with
 #   wrangler kv:namespace create RATE_LIMIT_KV
 # then paste the id below and uncomment. Without it, rate limiting is skipped.
 # [[kv_namespaces]]

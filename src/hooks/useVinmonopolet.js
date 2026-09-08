@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { PROXY_URL, APP_TOKEN } from "../constants.js";
+import { proxyJson } from "../shared/proxyClient.js";
 
 /**
  * Vinmonopolet's public "details-normal" endpoint only returns an index —
@@ -29,26 +29,6 @@ function extractProducts(data) {
   return [];
 }
 
-async function callProxy(path, params, signal) {
-  if (!PROXY_URL || !APP_TOKEN) {
-    const err = new Error("proxy_not_configured");
-    err.code = "not_configured";
-    throw err;
-  }
-  const url = new URL(path, PROXY_URL.endsWith("/") ? PROXY_URL : PROXY_URL + "/");
-  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${APP_TOKEN}` },
-    signal,
-  });
-  if (!res.ok) {
-    const err = new Error(`proxy_${res.status}`);
-    err.code = res.status;
-    throw err;
-  }
-  return res.json();
-}
-
 export function useVinmonopolet() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -62,7 +42,7 @@ export function useVinmonopolet() {
     setLoading(true);
     setError(null);
     try {
-      const data = await callProxy(path, params, ctrl.signal);
+      const data = await proxyJson(path, params, ctrl.signal);
       const mapped = extractProducts(data)
         .map((p) => mapProduct(p))
         .filter(Boolean);

@@ -61,12 +61,54 @@ VITE_APP_TOKEN=<samme token som CLIENT_TOKEN i Workeren>
 
 ## Discogs-API
 
-Vinyl-oppslag går gjennom samme Worker-proxy. Discogs-token settes som Worker-secret (`wrangler secret put DISCOGS_TOKEN`) — aldri i klienten. Se `docs/PLAN.md` (Fase 3) for detaljer.
+Vinyl-oppslag går gjennom **samme** Worker-proxy som vin. Ingen ny variabel i klienten.
+
+### 1. Skaff token
+
+1. Logg inn på https://www.discogs.com/settings/developers
+2. «Generate new token» under *Personal access token*
+3. Kopier verdien
+
+### 2. Legg den i Workeren
+
+```bash
+wrangler secret put DISCOGS_TOKEN
+wrangler deploy
+```
+
+Uten secreten svarer Discogs-rutene `503 discogs_not_configured`, mens vin-søket fortsetter å virke.
+
+### Ruter
+
+| Rute | Gir |
+|------|-----|
+| `GET /discogs/search?q=` | `{ results: [...] }` — inntil 25 treff |
+| `GET /discogs/barcode?ean=` | samme form, oppslag på strekkode |
+| `GET /discogs/release/<id>` | én utgivelse, trimmet til faste felt |
+| `GET /discogs/cover/<id>` | coverbildet som bytes |
+
+### Hvorfor det er bygget slik
+
+- **Klienten sender aldri en URL.** Den sender en release-id, og Workeren bygger hver
+  oppstrøms-URL selv av validerte siffer. Det finnes ingen kodesti som henter en adresse
+  klienten har bestemt, så proxyen kan ikke brukes som åpent relé.
+- **Coverbildet** hentes fra URL-en *Discogs selv* returnerte, og først etter at verten er
+  sjekket mot en allowlist, protokollen er https og redirects er avvist.
+- **`DISCOGS_TOKEN` går til `api.discogs.com` og ingen andre steder** — aldri til bilde-CDN-en,
+  aldri tilbake til klienten, aldri i en feilmelding.
+- **Svar trimmes** til en fast feltliste før de når klienten. En release krymper fra ~150 kB
+  til ~1 kB, og ingenting uventet fra Discogs videreformidles.
+- **Caching i Workeren** (søk 1 t, release 1 døgn, cover 30 dager) holder oss innenfor
+  Discogs' grense på 60 kall i minuttet.
+
+`CLIENT_TOKEN` kan hentes ut av klient-bundelen. Den er en kvotesperre mot direkte kall,
+ikke ekte autentisering — derfor rate-limit i tillegg.
 
 ## Datamodell
 
 - Én vin følger `src/data/wineSchema.js`: Vinmonopolet-felter, egne smaksnotater og lagerstyring (`quantity`, `cellarLocation`, `drinkFrom` / `drinkBy`).
-- Én plate følger `src/data/recordSchema.js` (under utvikling).
+- Én plate følger `src/vinyl/recordSchema.js`: Discogs-felter, Goldmine-tilstand for plate og cover, egne notater og kjøpsdata.
+- Arkitekturen bak oppdelingen står i `docs/ARCHITECTURE.md`.
 
 ## Eksport / import
 
