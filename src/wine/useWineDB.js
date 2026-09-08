@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { createWine, normalizeWine } from "../data/wineSchema.js";
+import { createWine, normalizeWine } from "./wineSchema.js";
 import { openDB, reqToPromise, txDone, getStore, STORE } from "../shared/idb.js";
 
 // The database itself is owned by src/shared/idb.js — name, version and upgrade

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { useWineDB, filterAndSortWines, SORT } from "./hooks/useWineDB.js";
-import WineSearch from "./components/WineSearch.jsx";
-import WineForm from "./components/WineForm.jsx";
-import WineCard from "./components/WineCard.jsx";
-import WineDetail from "./components/WineDetail.jsx";
-import FilterBar from "./components/FilterBar.jsx";
-import ExportImport from "./components/ExportImport.jsx";
+import { useWineDB, filterAndSortWines, SORT } from "./wine/useWineDB.js";
+import WineSearch from "./wine/components/WineSearch.jsx";
+import WineForm from "./wine/components/WineForm.jsx";
+import WineCard from "./wine/components/WineCard.jsx";
+import WineDetail from "./wine/components/WineDetail.jsx";
+import WineFilterBar from "./wine/components/WineFilterBar.jsx";
+import ExportImport from "./shared/components/ExportImport.jsx";
 import SegmentedToggle from "./shared/components/SegmentedToggle.jsx";
 import VinylScreen from "./vinyl/VinylScreen.jsx";
 
@@ -111,7 +111,7 @@ export default function App() {
               <strong>{stats.tasted}</strong> smakt · <strong>{stats.bottles}</strong> flasker
             </span>
           </div>
-          <FilterBar filters={filters} onChange={setFilters} />
+          <WineFilterBar filters={filters} onChange={setFilters} />
           {visibleWines.length === 0 ? (
             <div className="empty-state">
               <span className="glyph" aria-hidden="true">🍷</span>

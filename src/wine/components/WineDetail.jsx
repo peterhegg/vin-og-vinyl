@@ -1,5 +1,5 @@
 import { useState } from "react";
-import RatingInput from "../shared/components/RatingInput.jsx";
+import RatingInput from "../../shared/components/RatingInput.jsx";
 
 const Row = ({ label, value }) =>
   value ? (

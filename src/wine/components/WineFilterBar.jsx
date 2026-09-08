@@ -1,6 +1,6 @@
-import { WINE_TYPES, WINE_STATUS } from "../data/wineSchema.js";
-import { SORT } from "../hooks/useWineDB.js";
-import FilterShell from "../shared/components/FilterShell.jsx";
+import { WINE_TYPES, WINE_STATUS } from "../wineSchema.js";
+import { SORT } from "../useWineDB.js";
+import FilterShell from "../../shared/components/FilterShell.jsx";
 
 /** Filtering, sorting and free-text search for the wine list. Wine fields; shell is shared (ADR-5). */
 export default function FilterBar({ filters, onChange }) {

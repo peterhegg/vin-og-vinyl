@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { normalizeWine } from "../data/wineSchema.js";
+import { normalizeWine } from "../../wine/wineSchema.js";
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);

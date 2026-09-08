@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { createWine, WINE_TYPES, WINE_STATUS } from "../data/wineSchema.js";
-import RatingInput from "../shared/components/RatingInput.jsx";
-import PhotoCapture from "../shared/components/PhotoCapture.jsx";
-import SegmentedToggle from "../shared/components/SegmentedToggle.jsx";
+import { createWine, WINE_TYPES, WINE_STATUS } from "../wineSchema.js";
+import RatingInput from "../../shared/components/RatingInput.jsx";
+import PhotoCapture from "../../shared/components/PhotoCapture.jsx";
+import SegmentedToggle from "../../shared/components/SegmentedToggle.jsx";
 
 const numOrNull = (v) => (v === "" || v == null ? null : Number(v));
 

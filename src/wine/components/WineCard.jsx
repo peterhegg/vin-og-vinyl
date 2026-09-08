@@ -1,4 +1,4 @@
-import RatingInput from "../shared/components/RatingInput.jsx";
+import RatingInput from "../../shared/components/RatingInput.jsx";
 
 /** Compact card for the wine list. */
 export default function WineCard({ wine, onOpen }) {
