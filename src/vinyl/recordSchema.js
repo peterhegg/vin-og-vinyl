@@ -4,7 +4,16 @@
 // Stored enum values are English; Norwegian appears only in the UI label maps
 // (docs/ARCHITECTURE.md, ADR-7).
 
-import { safeExternalUrl, safeImageDataUrl } from "../shared/sanitize.js";
+import {
+  safeExternalUrl,
+  safeImageDataUrl,
+  safeText,
+  safeTextOrNull,
+  safeNumber,
+  safeCount,
+  safeId,
+  safeIsoDate,
+} from "../shared/sanitize.js";
 
 export const RECORD_STATUS = {
   OWNED: "owned",
@@ -54,11 +63,9 @@ export function clampYear(v) {
   return n;
 }
 
-function numOrNull(v) {
-  if (v === "" || v == null) return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
+/** Bounded on both axes: an import file must not be able to define 10 000 genres. */
+const MAX_LIST = 32;
+const MAX_LIST_ITEM = 100;
 
 function stringList(v) {
   if (!Array.isArray(v)) return [];
@@ -66,10 +73,11 @@ function stringList(v) {
   const out = [];
   for (const item of v) {
     if (typeof item !== "string") continue;
-    const trimmed = item.trim();
+    const trimmed = item.slice(0, MAX_LIST_ITEM).trim();
     if (!trimmed || seen.has(trimmed)) continue;
     seen.add(trimmed);
     out.push(trimmed);
+    if (out.length >= MAX_LIST) break;
   }
   return out;
 }
@@ -80,83 +88,71 @@ function grade(v) {
 
 /**
  * Returns a fresh, fully-shaped record. Every persisted record has exactly these
- * keys so queries and indexes stay stable.
+ * keys, with exactly these types, so queries and indexes stay stable.
+ *
+ * Every field is coerced here rather than in normalizeRecord: this is the single
+ * gate every write passes through — `dbPutRecord` calls it directly — so a field
+ * validated only in normalizeRecord would still be reachable from the UI path.
  *
  * Cover art is split: the thumbnail lives here, the full-resolution image lives in
  * the separate `covers` store and is never a field on the record (ADR-4).
  */
 export function createRecord(partial = {}) {
   return {
-    id: partial.id ?? crypto.randomUUID(),
-    status: partial.status ?? RECORD_STATUS.OWNED,
-    addedAt: partial.addedAt ?? new Date().toISOString(),
-    acquiredAt: partial.acquiredAt ?? null,
+    id: safeId(partial.id),
+    status: partial.status === RECORD_STATUS.WISH ? RECORD_STATUS.WISH : RECORD_STATUS.OWNED,
+    addedAt: safeIsoDate(partial.addedAt, new Date().toISOString()),
+    acquiredAt: safeIsoDate(partial.acquiredAt),
 
     // From Discogs or manual entry
-    artist: partial.artist ?? "",
-    title: partial.title ?? "",
-    releaseYear: partial.releaseYear ?? null, // this pressing
-    originalYear: partial.originalYear ?? null, // first release of the music
-    label: partial.label ?? "",
-    catalogNumber: partial.catalogNumber ?? "",
-    formats: partial.formats ?? [],
-    pressingNote: partial.pressingNote ?? "",
-    country: partial.country ?? "",
-    genres: partial.genres ?? [],
-    styles: partial.styles ?? [],
-    discogsId: partial.discogsId ?? null,
+    artist: safeText(partial.artist, 300),
+    title: safeText(partial.title, 300),
+    releaseYear: clampYear(partial.releaseYear), // this pressing
+    originalYear: clampYear(partial.originalYear), // first release of the music
+    label: safeText(partial.label, 200),
+    catalogNumber: safeText(partial.catalogNumber, 100),
+    formats: stringList(partial.formats),
+    pressingNote: safeText(partial.pressingNote),
+    country: safeText(partial.country, 100),
+    genres: stringList(partial.genres),
+    styles: stringList(partial.styles),
+    discogsId: safeNumber(partial.discogsId, { min: 1, integer: true }),
     discogsUrl: safeExternalUrl(partial.discogsUrl),
-    barcode: partial.barcode ?? null,
+    barcode: safeTextOrNull(partial.barcode, 32),
     coverThumbBase64: safeImageDataUrl(partial.coverThumbBase64),
 
     // Condition
-    mediaCondition: partial.mediaCondition ?? null,
-    sleeveCondition: partial.sleeveCondition ?? null,
-    conditionNotes: partial.conditionNotes ?? "",
+    mediaCondition: grade(partial.mediaCondition),
+    sleeveCondition: grade(partial.sleeveCondition),
+    conditionNotes: safeText(partial.conditionNotes),
 
     // User fields
-    myRating: partial.myRating ?? null, // 1–10
-    myNotes: partial.myNotes ?? "",
+    myRating: clampRating(partial.myRating), // 1–10
+    myNotes: safeText(partial.myNotes),
 
     // Purchase
-    purchasePriceNOK: partial.purchasePriceNOK ?? null,
-    purchaseDate: partial.purchaseDate ?? "",
-    purchasePlace: partial.purchasePlace ?? "",
+    purchasePriceNOK: safeNumber(partial.purchasePriceNOK, { min: 0, max: 1e9 }),
+    purchaseDate: safeText(partial.purchaseDate, 40),
+    purchasePlace: safeText(partial.purchasePlace, 200),
 
     // Shelf
-    storageLocation: partial.storageLocation ?? "",
-    plays: partial.plays ?? 0,
-    estimatedValueNOK: partial.estimatedValueNOK ?? null,
+    storageLocation: safeText(partial.storageLocation, 200),
+    plays: safeCount(partial.plays),
+    estimatedValueNOK: safeNumber(partial.estimatedValueNOK, { min: 0, max: 1e9 }),
   };
 }
 
 // Keys that must never be lost on update/import merge.
 export const RECORD_KEYS = Object.keys(createRecord());
 
-/** Coerce an arbitrary (imported/parsed) object into a valid record. */
+/**
+ * Coerce an arbitrary (imported/parsed) object into a valid record, or reject it.
+ * The field-by-field coercion lives in createRecord; this only adds the rule that
+ * an import must not create empty rows.
+ */
 export function normalizeRecord(raw) {
-  if (!raw || typeof raw !== "object") return null;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const record = createRecord(raw);
-
-  record.status = raw.status === RECORD_STATUS.WISH ? RECORD_STATUS.WISH : RECORD_STATUS.OWNED;
-  record.artist = typeof raw.artist === "string" ? raw.artist.trim() : "";
-  record.title = typeof raw.title === "string" ? raw.title.trim() : "";
-  record.releaseYear = clampYear(raw.releaseYear);
-  record.originalYear = clampYear(raw.originalYear);
-  record.formats = stringList(raw.formats);
-  record.genres = stringList(raw.genres);
-  record.styles = stringList(raw.styles);
-  record.discogsId = Number.isFinite(+raw.discogsId) && +raw.discogsId > 0 ? Math.trunc(+raw.discogsId) : null;
-  record.barcode = typeof raw.barcode === "string" && raw.barcode.trim() ? raw.barcode.trim() : null;
-
-  record.mediaCondition = grade(raw.mediaCondition);
-  record.sleeveCondition = grade(raw.sleeveCondition);
-  record.myRating = clampRating(raw.myRating);
-
-  record.purchasePriceNOK = numOrNull(raw.purchasePriceNOK);
-  record.estimatedValueNOK = numOrNull(raw.estimatedValueNOK);
-  record.plays = Number.isFinite(+raw.plays) ? Math.max(0, Math.trunc(+raw.plays)) : 0;
-
   // A record with neither artist nor title is not worth storing.
   if (!record.artist && !record.title) return null;
   return record;

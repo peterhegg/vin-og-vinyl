@@ -1,9 +1,33 @@
 // Field definitions for one wine. Single source of truth for the data model.
 
-import { safeExternalUrl, safeImageDataUrl } from "../shared/sanitize.js";
+import {
+  safeExternalUrl,
+  safeImageDataUrl,
+  safeText,
+  safeTextOrNull,
+  safeNumber,
+  safeCount,
+  safeId,
+  safeIsoDate,
+} from "../shared/sanitize.js";
 
 // Re-exported so existing imports of these helpers keep working.
 export { safeExternalUrl, safeImageDataUrl };
+
+const YEAR = { min: 1800, max: 2200, integer: true };
+
+/** Bounded on both axes: an import file must not be able to define 10 000 grapes. */
+function grapeList(v) {
+  if (!Array.isArray(v)) return [];
+  const out = [];
+  for (const g of v) {
+    if (typeof g !== "string") continue;
+    const trimmed = g.slice(0, 100).trim();
+    if (trimmed) out.push(trimmed);
+    if (out.length >= 32) break;
+  }
+  return out;
+}
 
 export const WINE_STATUS = {
   TASTED: "smakt",
@@ -21,44 +45,49 @@ export const WINE_TYPES = [
 
 /**
  * Returns a fresh, fully-shaped wine object with sensible defaults.
- * Every persisted wine has exactly these keys so queries/indexes stay stable.
+ * Every persisted wine has exactly these keys, with exactly these types, so
+ * queries/indexes stay stable.
+ *
+ * Every field is coerced here rather than in normalizeWine: this is the single
+ * gate every write passes through — `dbPutWine` calls it directly — so a field
+ * validated only in normalizeWine would still be reachable from the UI path.
  */
 export function createWine(partial = {}) {
   return {
-    id: partial.id ?? crypto.randomUUID(),
-    status: partial.status ?? WINE_STATUS.TASTED,
-    addedAt: partial.addedAt ?? new Date().toISOString(),
-    tastedAt: partial.tastedAt ?? null,
+    id: safeId(partial.id),
+    status: partial.status === WINE_STATUS.WISH ? WINE_STATUS.WISH : WINE_STATUS.TASTED,
+    addedAt: safeIsoDate(partial.addedAt, new Date().toISOString()),
+    tastedAt: safeIsoDate(partial.tastedAt),
 
     // From Vinmonopolet or manual entry
-    name: partial.name ?? "",
-    producer: partial.producer ?? "",
-    supplier: partial.supplier ?? "",
-    country: partial.country ?? "",
-    region: partial.region ?? "",
-    subregion: partial.subregion ?? "",
-    grapes: partial.grapes ?? [],
-    vintage: partial.vintage ?? null,
-    type: partial.type ?? "",
-    alcoholPct: partial.alcoholPct ?? null,
-    volumeLitre: partial.volumeLitre ?? null,
-    priceNOK: partial.priceNOK ?? null,
-    vinmonopoletId: partial.vinmonopoletId ?? null,
+    name: safeText(partial.name, 300),
+    producer: safeText(partial.producer, 200),
+    supplier: safeText(partial.supplier, 200),
+    country: safeText(partial.country, 100),
+    region: safeText(partial.region, 100),
+    subregion: safeText(partial.subregion, 100),
+    grapes: grapeList(partial.grapes),
+    vintage: safeNumber(partial.vintage, YEAR),
+    type: safeText(partial.type, 60),
+    alcoholPct: safeNumber(partial.alcoholPct, { min: 0, max: 100 }),
+    volumeLitre: safeNumber(partial.volumeLitre, { min: 0, max: 100 }),
+    priceNOK: safeNumber(partial.priceNOK, { min: 0, max: 1e9 }),
+    vinmonopoletId: safeTextOrNull(partial.vinmonopoletId, 60),
     vinmonopoletUrl: safeExternalUrl(partial.vinmonopoletUrl),
-    barcode: partial.barcode ?? null,
+    barcode: safeTextOrNull(partial.barcode, 32),
 
     // User fields
-    myScore: partial.myScore ?? null, // 1–10 corks
-    myNotes: partial.myNotes ?? "",
-    foodPairing: partial.foodPairing ?? "",
-    purchasedAt: partial.purchasedAt ?? "",
-    wantAgain: partial.wantAgain ?? false,
+    myScore: clampScore(partial.myScore), // 1–10 corks
+    myNotes: safeText(partial.myNotes),
+    foodPairing: safeText(partial.foodPairing),
+    purchasedAt: safeText(partial.purchasedAt, 200),
+    wantAgain: Boolean(partial.wantAgain),
 
     // Cellar / inventory
-    quantity: partial.quantity ?? 0,
-    cellarLocation: partial.cellarLocation ?? "",
-    drinkFrom: partial.drinkFrom ?? null, // year (number) or null
-    drinkBy: partial.drinkBy ?? null, // year (number) or null
+    quantity: safeCount(partial.quantity),
+    cellarLocation: safeText(partial.cellarLocation, 200),
+    drinkFrom: safeNumber(partial.drinkFrom, YEAR), // year (number) or null
+    drinkBy: safeNumber(partial.drinkBy, YEAR), // year (number) or null
 
     // Image
     labelImageBase64: safeImageDataUrl(partial.labelImageBase64),
@@ -68,19 +97,13 @@ export function createWine(partial = {}) {
 // Keys that must never be lost on update/import merge.
 export const WINE_KEYS = Object.keys(createWine());
 
-/** Coerce an arbitrary (imported/parsed) object into a valid wine. */
+/**
+ * Coerce an arbitrary (imported/parsed) object into a valid wine, or reject it.
+ * The field-by-field coercion lives in createWine.
+ */
 export function normalizeWine(raw) {
-  if (!raw || typeof raw !== "object") return null;
-  const wine = createWine(raw);
-  // Guard the few numeric/array fields against bad import data.
-  wine.grapes = Array.isArray(raw.grapes) ? raw.grapes.filter((g) => typeof g === "string") : [];
-  wine.myScore = clampScore(raw.myScore);
-  wine.quantity = Number.isFinite(+raw.quantity) ? Math.max(0, Math.trunc(+raw.quantity)) : 0;
-  wine.wantAgain = Boolean(raw.wantAgain);
-  if (raw.status !== WINE_STATUS.TASTED && raw.status !== WINE_STATUS.WISH) {
-    wine.status = WINE_STATUS.TASTED;
-  }
-  return wine;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  return createWine(raw);
 }
 
 export function clampScore(v) {

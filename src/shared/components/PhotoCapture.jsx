@@ -13,16 +13,20 @@ export default function PhotoCapture({ label = "Bilde", value, onChange, maxWidt
   const cameraRef = useRef(null);
   const galleryRef = useRef(null);
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const handleFile = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = ""; // allow re-picking the same file
     if (!file) return;
     setBusy(true);
+    setFailed(false);
     try {
       onChange(await compressImage(file, maxWidth));
     } catch {
-      // ignore — user can retry
+      // A file the browser cannot decode, or one too large to fit on a canvas.
+      // Saying so beats a button that quietly does nothing.
+      setFailed(true);
     } finally {
       setBusy(false);
     }
@@ -51,6 +55,11 @@ export default function PhotoCapture({ label = "Bilde", value, onChange, maxWidt
           </button>
         )}
       </div>
+      {failed && (
+        <p className="error-text" role="alert" style={{ margin: 0 }}>
+          Klarte ikke å lese bildet. Prøv et annet, eller ta et nytt.
+        </p>
+      )}
       <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={handleFile} />
       <input ref={galleryRef} type="file" accept="image/*" hidden onChange={handleFile} />
     </div>

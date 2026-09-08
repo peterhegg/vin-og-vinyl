@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // One place for all navigation state (ADR-2). No router library: every screen
 // change is a history.pushState, and the browser's back button (Android's
@@ -12,6 +12,36 @@ const sameNav = (a, b) =>
   a.tab === b.tab &&
   a.detailId === b.detailId &&
   a.form === b.form;
+
+/**
+ * A form can open with a full-resolution cover attached (a Discogs pick, or the
+ * image read back when editing). That image is a few hundred kilobytes, and
+ * everything in `nav` is serialised into a history entry — so pushing it would
+ * copy the picture into the session history on every single form open, and a
+ * long editing session can run the browser's history-state quota dry (Firefox
+ * caps it, and pushState *throws* when it does).
+ *
+ * The image is therefore held here, outside history, and the entry carries only
+ * a token. Old entries are dropped so the map cannot grow without bound. After a
+ * reload the token no longer resolves: the form then opens without a preview,
+ * and because it never marks the cover as touched, the stored image is left
+ * alone. Nothing is lost.
+ */
+const formCovers = new Map();
+const MAX_FORM_COVERS = 4;
+let formToken = 0;
+
+function rememberCover(cover) {
+  const token = `f${++formToken}`;
+  if (cover) {
+    formCovers.set(token, cover);
+    for (const old of formCovers.keys()) {
+      if (formCovers.size <= MAX_FORM_COVERS) break;
+      formCovers.delete(old);
+    }
+  }
+  return token;
+}
 
 export function useNav() {
   const [nav, setNav] = useState(() => ({ ...HOME, ...(window.history.state?.nav || {}) }));
@@ -58,7 +88,21 @@ export function useNav() {
   );
   const setTab = useCallback((tab) => go({ tab, detailId: null, form: null }), [go]);
   const openDetail = useCallback((detailId) => go({ detailId, form: null }), [go]);
-  const openForm = useCallback((form) => go({ form, detailId: null }), [go]);
+  const openForm = useCallback(
+    (form) => {
+      if (!form) return go({ form: null, detailId: null });
+      const { cover, ...rest } = form;
+      go({ form: { ...rest, coverToken: rememberCover(cover) }, detailId: null });
+    },
+    [go]
+  );
 
-  return { nav, back, setCollection, setTab, openDetail, openForm };
+  // Screens still read `nav.form.cover`: the image is put back on the way out,
+  // it just never travelled through history to get here.
+  const navWithCover = useMemo(() => {
+    if (!nav.form) return nav;
+    return { ...nav, form: { ...nav.form, cover: formCovers.get(nav.form.coverToken) ?? null } };
+  }, [nav]);
+
+  return { nav: navWithCover, back, setCollection, setTab, openDetail, openForm };
 }

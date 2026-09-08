@@ -50,7 +50,10 @@ const IMAGE_TIMEOUT_MS = 12000;
 
 // Discogs allows 60 authenticated requests per minute in total, so for a personal app
 // the per-IP budget is effectively a global one. Images get a tighter budget of their own.
-const RATE_LIMITS = { api: 60, img: 30 };
+// The `auth` bucket covers requests that never got past the token gate. Without it,
+// anyone who learns the Worker URL can burn the account's request quota for free,
+// because the token check returns before any budget is consulted.
+const RATE_LIMITS = { api: 60, img: 30, auth: 20 };
 
 const CACHE_SECONDS = { search: 3600, release: 86400, cover: 2592000 };
 
@@ -265,14 +268,34 @@ async function fetchCover(id, env, cors) {
   }
 
   // Streamed straight through: nothing is buffered, so a large image cannot exhaust
-  // the Worker's memory.
-  return new Response(img.body, {
+  // the Worker's memory. Content-Length is advisory and absent on a chunked response,
+  // so the ceiling is also enforced on the bytes as they pass.
+  return new Response(img.body.pipeThrough(byteLimit(MAX_IMAGE_BYTES)), {
     status: 200,
     headers: {
       "Content-Type": type,
       "X-Content-Type-Options": "nosniff",
       "Cache-Control": `public, max-age=${CACHE_SECONDS.cover}`,
       ...cors,
+    },
+  });
+}
+
+/**
+ * Cuts the stream off past `max` bytes. The client sees a truncated image rather
+ * than an unbounded download; the headers are already sent by then, so erroring
+ * the stream is the only signal available.
+ */
+function byteLimit(max) {
+  let seen = 0;
+  return new TransformStream({
+    transform(chunk, controller) {
+      seen += chunk.byteLength;
+      if (seen > max) {
+        controller.error(new Error("cover_too_large"));
+        return;
+      }
+      controller.enqueue(chunk);
     },
   });
 }
@@ -317,10 +340,15 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     if (request.method !== "GET") return json({ error: "method_not_allowed" }, 405, cors);
 
+    const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+
     // The shared token is extractable from the client bundle, so this is a quota gate
     // against direct calls — not real authentication.
     const token = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
     if (!env.CLIENT_TOKEN || token !== env.CLIENT_TOKEN) {
+      // Charged against its own budget so a flood of rejected calls still costs the
+      // caller its per-IP allowance rather than our request quota.
+      if (await overRateLimit(env, ip, "auth")) return json({ error: "rate_limited" }, 429, cors);
       return json({ error: "unauthorized" }, 401, cors);
     }
 
@@ -333,7 +361,6 @@ export default {
       return json({ error: "discogs_not_configured" }, 503, cors);
     }
 
-    const ip = request.headers.get("CF-Connecting-IP") || "unknown";
     const bucket = route.name === "discogs_cover" ? "img" : "api";
     if (await overRateLimit(env, ip, bucket)) return json({ error: "rate_limited" }, 429, cors);
 

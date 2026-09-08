@@ -9,6 +9,8 @@ const ERROR_TEXT = {
   future_version:
     "Sikkerhetskopien er laget av en nyere versjon av appen. Oppdater appen først. Ingenting ble endret.",
   empty: "Sikkerhetskopien er tom — ingenting å importere.",
+  too_large:
+    "Fila er for stor til å åpnes trygt. En sikkerhetskopi herfra er langt mindre — kontroller at du valgte riktig fil.",
   export_failed: "Kunne ikke lage sikkerhetskopien. Prøv igjen.",
   import_failed: "Importen feilet. Ingenting ble endret.",
 };

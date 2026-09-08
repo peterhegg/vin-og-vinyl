@@ -32,6 +32,14 @@ const BATCH = 20;
 /** Wines carry no separate store, so they only need a flush ceiling. */
 const WINE_FLUSH = 100;
 
+/**
+ * Refuse a file this large before reading it. `file.text()` decodes the whole
+ * thing into one JS string and `JSON.parse` builds a second copy of it; a few
+ * hundred megabytes of that kills the tab on a phone with no message at all.
+ * A real backup of a big shelf — covers included — is a few tens of megabytes.
+ */
+export const MAX_BACKUP_BYTES = 64 * 1024 * 1024;
+
 /** Thrown by parseBackup and readBackupFile. `code` drives the message the UI shows. */
 export class BackupError extends Error {
   constructor(code) {
@@ -178,6 +186,7 @@ export function parseBackup(text) {
 }
 
 export async function readBackupFile(file) {
+  if (file?.size > MAX_BACKUP_BYTES) throw new BackupError("too_large");
   return parseBackup(await file.text());
 }
 
@@ -220,13 +229,26 @@ export async function importBackup({ wines = [], records = [] } = {}) {
     [STORE.WINES, STORE.RECORDS, STORE.COVERS],
     "readwrite"
   );
-  for (const wine of wineEntries) stores[STORE.WINES].put(wine);
-  for (const { entry, full } of recordEntries) {
-    stores[STORE.RECORDS].put(entry);
-    // Overwriting a record replaces its cover too — otherwise an imported record
-    // without cover art would keep the full image of whatever it replaced.
-    if (full) stores[STORE.COVERS].put({ id: entry.id, full });
-    else stores[STORE.COVERS].delete(entry.id);
+  // put() throws synchronously on a value IndexedDB cannot store (a structured-clone
+  // failure, or a key type it rejects). Without the abort, that throw would escape
+  // with writes already queued — and those queued writes still commit, which is
+  // exactly the half-imported state the single transaction exists to prevent.
+  try {
+    for (const wine of wineEntries) stores[STORE.WINES].put(wine);
+    for (const { entry, full } of recordEntries) {
+      stores[STORE.RECORDS].put(entry);
+      // Overwriting a record replaces its cover too — otherwise an imported record
+      // without cover art would keep the full image of whatever it replaced.
+      if (full) stores[STORE.COVERS].put({ id: entry.id, full });
+      else stores[STORE.COVERS].delete(entry.id);
+    }
+  } catch (e) {
+    try {
+      tx.abort();
+    } catch {
+      /* already aborted or committed — nothing left to undo */
+    }
+    throw e;
   }
   await txDone(tx);
 

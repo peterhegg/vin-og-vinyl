@@ -32,19 +32,6 @@ export function useBarcode({ onDetected } = {}) {
   const onDetectedRef = useRef(onDetected);
   onDetectedRef.current = onDetected;
 
-  // Diagnostics only — lets the UI show *why* nothing is happening instead of
-  // a silent camera feed. `framesChecked` proves detect() is actually running;
-  // `anySeen` proves the device's barcode backend sees *something* (even the
-  // wrong format), which rules out "camera works, detection backend doesn't".
-  const [debug, setDebug] = useState({
-    formats: [],
-    framesChecked: 0,
-    anySeen: null,
-    videoRes: null,
-    canvasRes: null,
-    torch: "unknown",
-  });
-
   const stop = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
@@ -63,20 +50,18 @@ export function useBarcode({ onDetected } = {}) {
       return;
     }
     try {
-      let supportedFormats = [];
       if (!detectorRef.current) {
         // Only request formats the device actually supports.
         let formats = FORMATS;
         try {
-          supportedFormats = await window.BarcodeDetector.getSupportedFormats();
-          formats = FORMATS.filter((f) => supportedFormats.includes(f));
+          const supported = await window.BarcodeDetector.getSupportedFormats();
+          formats = FORMATS.filter((f) => supported.includes(f));
           if (!formats.length) formats = FORMATS;
         } catch {
           /* keep default formats */
         }
         detectorRef.current = new window.BarcodeDetector({ formats });
       }
-      setDebug((d) => ({ ...d, formats: supportedFormats }));
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -111,15 +96,11 @@ export function useBarcode({ onDetected } = {}) {
       // decoding fails even when the format is supported.
       try {
         const track = stream.getVideoTracks()[0];
-        const hasTorch = !!track?.getCapabilities?.().torch;
-        if (hasTorch) {
+        if (track?.getCapabilities?.().torch) {
           await track.applyConstraints({ advanced: [{ torch: true }] });
-          setDebug((d) => ({ ...d, torch: "on" }));
-        } else {
-          setDebug((d) => ({ ...d, torch: "unsupported" }));
         }
       } catch {
-        setDebug((d) => ({ ...d, torch: "failed" }));
+        /* no torch on this device, or the constraint was refused */
       }
 
       if (!canvasRef.current) canvasRef.current = document.createElement("canvas");
@@ -154,14 +135,9 @@ export function useBarcode({ onDetected } = {}) {
             target = canvas;
           }
 
+          // No per-frame state updates here: this runs ~6 times a second, and a
+          // setState on every pass re-rendered the whole overlay for nothing.
           const codes = await detectorRef.current.detect(target);
-          setDebug((d) => ({
-            ...d,
-            framesChecked: d.framesChecked + 1,
-            anySeen: codes.length > 0 ? codes.map((c) => `${c.format}:${c.rawValue}`) : d.anySeen,
-            videoRes: vw && vh ? `${vw}x${vh}` : d.videoRes,
-            canvasRes: target === canvas ? `${canvas.width}x${canvas.height}` : "ingen (video direkte)",
-          }));
           const hit = codes.find((c) => /^\d{8,14}$/.test(c.rawValue));
           if (hit) {
             stop();
@@ -183,5 +159,5 @@ export function useBarcode({ onDetected } = {}) {
   // Clean up camera on unmount.
   useEffect(() => stop, [stop]);
 
-  return { supported: barcodeSupported, scanning, error, videoRef, start, stop, debug };
+  return { supported: barcodeSupported, scanning, error, videoRef, start, stop };
 }
