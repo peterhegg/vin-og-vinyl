@@ -1,3 +1,5 @@
+import { useRef } from "react";
+
 /**
  * 1–max rating, rendered as a row of tappable glyphs. Click a glyph to set the
  * score, click the active one again to clear. Knows no domain fields (ADR-5):
@@ -5,6 +7,9 @@
  *
  * Inactive glyphs use `--rating-empty`, which is contrast-checked (≥3:1) against
  * every surface they sit on — never the raw panel color.
+ *
+ * Interactive mode follows the radiogroup keyboard contract (WCAG 4.1.2): one
+ * tab stop, arrow keys move and set the score.
  */
 
 const GLYPHS = {
@@ -43,11 +48,26 @@ export default function RatingInput({
   const items = Array.from({ length: max }, (_, i) => i + 1);
   const draw = GLYPHS[glyph] ?? GLYPHS.cork;
   const groupLabel = value != null ? `${value} av ${max}` : `Ingen ${label.toLowerCase()} satt`;
+  const btnRefs = useRef([]);
+  const focusIndex = (value != null ? value : 1) - 1;
+
+  const onKeyDown = (e) => {
+    const dir =
+      e.key === "ArrowRight" || e.key === "ArrowUp" ? 1 :
+      e.key === "ArrowLeft" || e.key === "ArrowDown" ? -1 : 0;
+    if (!dir) return;
+    e.preventDefault();
+    const current = value != null ? value : dir > 0 ? 0 : 1;
+    const next = Math.min(max, Math.max(1, current + dir));
+    onChange(next);
+    btnRefs.current[next - 1]?.focus();
+  };
 
   return (
     <div
       role={readOnly ? "img" : "radiogroup"}
       aria-label={readOnly ? groupLabel : label}
+      onKeyDown={readOnly ? undefined : onKeyDown}
       style={{ display: "flex", gap: 4, flexWrap: "wrap" }}
     >
       {items.map((n) => {
@@ -57,10 +77,12 @@ export default function RatingInput({
         return (
           <button
             key={n}
+            ref={(el) => (btnRefs.current[n - 1] = el)}
             type="button"
             role="radio"
             aria-checked={value === n}
             aria-label={`${n} av ${max}`}
+            tabIndex={n - 1 === focusIndex ? 0 : -1}
             onClick={() => onChange(value === n ? null : n)}
             style={{ padding: 6, minHeight: 44, minWidth: 44 }}
           >

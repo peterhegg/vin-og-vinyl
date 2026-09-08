@@ -45,6 +45,7 @@
   --danger: #C96A4F;
   --line: rgba(242, 232, 208, 0.1);
   --line-strong: rgba(242, 232, 208, 0.18);
+  --field-border: rgba(242, 232, 208, 0.48); /* form controls: ≥3:1 non-text contrast (1.4.11) */
 
   /* Typography */
   --font-display: "Cormorant Garamond", Georgia, serif;
@@ -93,6 +94,33 @@
    ============================================================ */
 
 * { box-sizing: border-box; }
+
+/* Visually hidden but available to screen readers (headings, live-region labels). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .btn:active,
+  .item-card:active,
+  .result-item:active { transform: none; }
+}
 
 html, body {
   margin: 0;
@@ -256,7 +284,7 @@ input, select, textarea {
 .input {
   min-height: var(--tap);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--field-border);
   border-radius: var(--radius-sm);
   color: var(--text);
   padding: 12px 14px;
@@ -329,6 +357,7 @@ input, select, textarea {
   justify-content: center;
 }
 .card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.card-thumb .thumb-glyph { width: 26px; height: 26px; color: var(--accent); opacity: 0.75; }
 
 .card-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .card-title-row { display: flex; justify-content: space-between; gap: var(--sp-2); align-items: baseline; }
@@ -432,7 +461,7 @@ input, select, textarea {
 }
 .segmented button {
   flex: 1;
-  min-height: 42px;
+  min-height: 44px;
   border-radius: 8px;
   font-size: var(--fs-body);
   font-weight: 500;
@@ -468,15 +497,17 @@ input, select, textarea {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   color: var(--text-soft);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   transition: color var(--dur) var(--ease);
 }
 .nav-btn[aria-current="page"] { color: var(--gold); }
-.nav-icon { font-size: 19px; line-height: 1; }
+.nav-icon { display: flex; line-height: 1; color: var(--text-soft); }
+.nav-icon svg { width: 22px; height: 22px; display: block; }
+.nav-btn[aria-current="page"] .nav-icon { color: var(--gold); }
 
 /* ============================================================
    States & feedback
@@ -501,13 +532,11 @@ input, select, textarea {
   align-items: center;
   gap: var(--sp-3);
 }
-.empty-state .glyph {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 42px;
+.empty-state .glyph-icon {
+  width: 44px;
+  height: 44px;
   color: var(--accent);
-  opacity: 0.85;
-  line-height: 1;
+  opacity: 0.8;
 }
 .empty-state p { margin: 0; max-width: 34ch; }
 
@@ -577,6 +606,13 @@ input, select, textarea {
   line-height: 1.4;
 }
 
+.want-again-mark {
+  flex-shrink: 0;
+  color: var(--gold);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 
 .chip {
@@ -586,7 +622,7 @@ input, select, textarea {
   font-size: var(--fs-small);
   color: var(--text-soft);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--field-border);
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 .chip--on {

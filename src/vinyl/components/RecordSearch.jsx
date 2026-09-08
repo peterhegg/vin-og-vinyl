@@ -111,7 +111,7 @@ export default function RecordSearch({ onSelect, onManual }) {
       )}
 
       <button type="button" className="btn btn-ghost" onClick={onManual}>
-        + Legg til manuelt
+        <span aria-hidden="true">+</span> Legg til manuelt
       </button>
 
       {scanning && <BarcodeScanner onDetected={handleBarcode} onClose={() => setScanning(false)} />}

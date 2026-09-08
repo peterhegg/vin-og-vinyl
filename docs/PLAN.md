@@ -210,12 +210,12 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 - [x] Fase 5 — Kombinert navigasjon ✓ 2026-09-08
 - [x] Fase 6 — Eksport/import v2 ✓ 2026-09-08
 - [x] Fase 7 — Tema + ikoner ✓ 2026-09-08
-- [ ] Fase 8 — Polish
+- [x] Fase 8 — Polish ✓ 2026-09-08
 - [ ] Fase 9 — Sikkerhet
 - [ ] Fase 10 — Test
 - [ ] Fase 11 — Deploy-handoff
 
-**Nåværende fase:** Fase 8 — Polish. Sonnet. accessibility-review + ux-copy.
+**Nåværende fase:** Fase 9 — Sikkerhetsgjennomgang. Opus, think hard. /sikkerhetsanalyse så /bugreview.
 
 Fase 0 gjort: navn byttet i alle filer (DB_NAME bevisst beholdt), repo renamet på
 GitHub til `vin-og-vinyl` (remote oppdatert, redirect aktiv), prod-bygg verifisert
@@ -321,6 +321,31 @@ maskinen — PNG-ene (512/192/180/64/512-maskable) ble tegnet fra SVG via nettle
 mot en liten node-server i scratchpad, deretter `optimize`-lagret med PIL. Aldri rediger
 PNG-ene for hånd. Verifisert i nettleser: vinyl-liste/detalj/skjema, vin-siden uendret,
 Innstillinger nøytral. Prod-bygg grønt.
+
+Fase 8 gjort: a11y + tekst. **Nye delte filer:** `shared/components/Glyph.jsx` (linje-
+ikoner i `currentColor` — erstatter emoji i bunn-nav 🗃️➕⚙️, listeminiatyrer 🍷💿 og
+tomtilstander), `shared/components/ScreenTitle.jsx` + `shared/useFocusOnMount.js` (h1/h2
+tar fokus når add/skjema/detalj åpnes — WCAG 2.4.3). **A11y:** `<main>`-landemerke i
+App; skjult `<h1>` («Vinsamling»/«Platesamling») på listevisningene som manglet
+overskrift; alle filter-tekstfelt (artist, land, drue …) fikk `aria-label` (hadde bare
+placeholder — 3.3.2); `SegmentedToggle` + `RatingInput` fikk radiogroup-tastaturkontrakt
+(én tab-stopp, piltaster flytter og setter verdi); offline-banner `role="status"` + ny
+tekst; dekorative piler/emoji/trekanter `aria-hidden`; `BarcodeScanner` fanger Tab så
+fokus ikke rømmer bak overlayet; `WineCard`-stjerne `role="img"`; `prefers-reduced-motion`
+slår av transformer. **Kontrast:** nytt `--field-border`-token (`rgba(242,232,208,.48)`,
+≥3:1 mot flate — 1.4.11) på alle skjemakontroller og chips; `--line` (0,1 alpha) var
+usynlig som feltkant. **Trykkmål:** segment 42→44 px, «Flere filtre»/«Flere detaljer»
+36→44 px, bunn-nav-tekst 11→12 px. **Fjernet:** `BarcodeScanner`s debug-linje
+(«v2 · N bilder · …») som ble sendt til brukere. **ux-copy:** Innstillinger — fire
+importmeldinger omskrevet (ugyldig fil / nyere versjon / tom fil / feilet import), tom
+samling viser nå forklaring i stedet for en `disabled` eksport-knapp uten et ord (import
+er fortsatt aktiv — det er gjenopprettings-veien); tomtilstander «finn din første» →
+«Gå til «Legg til» …»; Discogs/Vinmonopolet-lenker fikk lik ordlyd. Verifisert i
+nettleser (mobil-viewport): landemerke + fokusflyt add→skjema→detalj, rating-piltaster
+8→7, filter-labels, offline-banner, tomtilstand i Innstillinger. Prod-bygg grønt.
+**Ikke gjort (flagget til Fase 10):** etter «Lagre» i skjema lander man på «Legg til»-
+skjermen, ikke på lista (useNav-semantikk fra Fase 5 — nav-endring er for risikabel i en
+polish-fase). `📷`-knappen i søk er fortsatt emoji (gjenkjennelig + har `aria-label`).
 
 ## Fast praksis (etablert Fase 0–6, gjelder resten)
 

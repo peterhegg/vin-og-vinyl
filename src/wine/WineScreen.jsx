@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { filterAndSortWines, SORT } from "./useWineDB.js";
 import { WINE_STATUS } from "./wineSchema.js";
+import Glyph from "../shared/components/Glyph.jsx";
+import ScreenTitle from "../shared/components/ScreenTitle.jsx";
 import WineSearch from "./components/WineSearch.jsx";
 import WineForm from "./components/WineForm.jsx";
 import WineCard from "./components/WineCard.jsx";
@@ -43,9 +45,7 @@ export default function WineScreen({ nav, db, onOpenDetail, onOpenForm, onBack }
   if (nav.form) {
     return (
       <div style={{ paddingTop: "var(--sp-3)" }}>
-        <h1 className="screen-title" style={{ marginBottom: "var(--sp-4)" }}>
-          {nav.form.initial?.id ? "Rediger vin" : "Ny vin"}
-        </h1>
+        <ScreenTitle>{nav.form.initial?.id ? "Rediger vin" : "Ny vin"}</ScreenTitle>
         <WineForm initial={nav.form.initial} onSave={save} onCancel={onBack} />
       </div>
     );
@@ -54,7 +54,7 @@ export default function WineScreen({ nav, db, onOpenDetail, onOpenForm, onBack }
   if (nav.tab === "add") {
     return (
       <div style={{ paddingTop: "var(--sp-3)" }}>
-        <h1 className="screen-title" style={{ marginBottom: "var(--sp-4)" }}>Legg til vin</h1>
+        <ScreenTitle>Legg til vin</ScreenTitle>
         <WineSearch
           onSelect={(product) => onOpenForm({ initial: product })}
           onManual={() => onOpenForm({ initial: {} })}
@@ -65,13 +65,14 @@ export default function WineScreen({ nav, db, onOpenDetail, onOpenForm, onBack }
 
   return (
     <div className="stack">
+      <h1 className="sr-only">Vinsamling</h1>
       <WineFilterBar filters={filters} onChange={setFilters} />
       {visible.length === 0 ? (
         <div className="empty-state">
-          <span className="glyph" aria-hidden="true">🍷</span>
+          <Glyph name="wine" className="glyph-icon" />
           {wines.length > 0 ? (
             <>
-              <p>Ingen viner matcher filtrene.</p>
+              <p>Ingen viner passer filtrene du har satt.</p>
               <button
                 type="button"
                 className="btn btn-ghost"
@@ -81,7 +82,7 @@ export default function WineScreen({ nav, db, onOpenDetail, onOpenForm, onBack }
               </button>
             </>
           ) : (
-            <p>Kjelleren er tom. Trykk «Legg til» og finn din første vin.</p>
+            <p>Kjelleren er tom. Gå til «Legg til» for å registrere den første vinen.</p>
           )}
         </div>
       ) : (

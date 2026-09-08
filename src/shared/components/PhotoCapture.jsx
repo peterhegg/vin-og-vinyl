@@ -40,10 +40,10 @@ export default function PhotoCapture({ label = "Bilde", value, onChange, maxWidt
       )}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button type="button" className="btn btn-ghost" onClick={() => cameraRef.current?.click()} disabled={busy}>
-          📷 Ta bilde
+          <span aria-hidden="true">📷</span> {busy ? "Behandler …" : "Ta bilde"}
         </button>
         <button type="button" className="btn btn-ghost" onClick={() => galleryRef.current?.click()} disabled={busy}>
-          🖼️ Velg fra galleri
+          <span aria-hidden="true">🖼️</span> Velg fra galleri
         </button>
         {value && (
           <button type="button" className="btn btn-danger" onClick={() => onChange(null)}>

@@ -1,4 +1,5 @@
 import RatingInput from "../../shared/components/RatingInput.jsx";
+import Glyph from "../../shared/components/Glyph.jsx";
 import { RECORD_STATUS, musicYear } from "../recordSchema.js";
 
 // The format a collector names first ("it's a 2xLP") — fall back to whatever's there.
@@ -17,7 +18,7 @@ export default function RecordCard({ record, onOpen }) {
         {record.coverThumbBase64 ? (
           <img src={record.coverThumbBase64} alt="" />
         ) : (
-          <span style={{ fontSize: 22 }} aria-hidden="true">💿</span>
+          <Glyph name="disc" className="thumb-glyph" />
         )}
       </div>
 

@@ -1,4 +1,5 @@
 import RatingInput from "../../shared/components/RatingInput.jsx";
+import Glyph from "../../shared/components/Glyph.jsx";
 
 /** Compact card for the wine list. */
 export default function WineCard({ wine, onOpen }) {
@@ -8,7 +9,7 @@ export default function WineCard({ wine, onOpen }) {
         {wine.labelImageBase64 ? (
           <img src={wine.labelImageBase64} alt="" />
         ) : (
-          <span style={{ fontSize: 22 }} aria-hidden="true">🍷</span>
+          <Glyph name="wine" className="thumb-glyph" />
         )}
       </div>
 
@@ -18,7 +19,9 @@ export default function WineCard({ wine, onOpen }) {
             {wine.name || "Uten navn"}
             {wine.vintage ? ` ${wine.vintage}` : ""}
           </span>
-          {wine.wantAgain && <span aria-label="Vil ha igjen" title="Vil ha igjen">⭐</span>}
+          {wine.wantAgain && (
+            <span className="want-again-mark" role="img" aria-label="Vil ha igjen">★</span>
+          )}
         </div>
         <span className="card-meta">
           {[wine.producer, wine.type, wine.country].filter(Boolean).join(" · ") || "—"}

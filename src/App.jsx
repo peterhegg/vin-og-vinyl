@@ -4,13 +4,14 @@ import { useNav } from "./shared/useNav.js";
 import { useOnlineStatus } from "./shared/useOnlineStatus.js";
 import SegmentedToggle from "./shared/components/SegmentedToggle.jsx";
 import SettingsScreen from "./shared/components/SettingsScreen.jsx";
+import Glyph from "./shared/components/Glyph.jsx";
 import WineScreen from "./wine/WineScreen.jsx";
 import VinylScreen from "./vinyl/VinylScreen.jsx";
 
 const TABS = [
-  { id: "list", label: "Samling", icon: "🗃️" },
-  { id: "add", label: "Legg til", icon: "➕" },
-  { id: "settings", label: "Innstillinger", icon: "⚙️" },
+  { id: "list", label: "Samling", icon: "collection" },
+  { id: "add", label: "Legg til", icon: "add" },
+  { id: "settings", label: "Innstillinger", icon: "settings" },
 ];
 
 // App shell (ADR-2): the segment + combined count is the "home", one of three
@@ -36,7 +37,11 @@ export default function App() {
 
   return (
     <div className="app-shell" data-collection={onSettings ? undefined : nav.collection}>
-      {!online && <div className="offline-banner">Ingen nettforbindelse — søk krever nett</div>}
+      {!online && (
+        <div className="offline-banner" role="status">
+          Uten nett nå — du kan bla og redigere, men ikke søke
+        </div>
+      )}
 
       {showSegment && (
         <div className="collection-switch">
@@ -61,13 +66,15 @@ export default function App() {
         </div>
       )}
 
-      {onSettings ? (
-        <SettingsScreen wineDB={wineDB} recordDB={recordDB} />
-      ) : nav.collection === "vinyl" ? (
-        <VinylScreen db={recordDB} {...screenProps} />
-      ) : (
-        <WineScreen db={wineDB} {...screenProps} />
-      )}
+      <main>
+        {onSettings ? (
+          <SettingsScreen wineDB={wineDB} recordDB={recordDB} />
+        ) : nav.collection === "vinyl" ? (
+          <VinylScreen db={recordDB} {...screenProps} />
+        ) : (
+          <WineScreen db={wineDB} {...screenProps} />
+        )}
+      </main>
 
       {!inSubview && (
         <nav className="bottom-nav" aria-label="Hovednavigasjon">
@@ -79,7 +86,9 @@ export default function App() {
               aria-current={nav.tab === t.id ? "page" : undefined}
               onClick={() => setTab(t.id)}
             >
-              <span className="nav-icon" aria-hidden="true">{t.icon}</span>
+              <span className="nav-icon">
+                <Glyph name={t.icon} />
+              </span>
               {t.label}
             </button>
           ))}

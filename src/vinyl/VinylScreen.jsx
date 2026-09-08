@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { filterAndSortRecords, SORT } from "./useRecordDB.js";
+import Glyph from "../shared/components/Glyph.jsx";
+import ScreenTitle from "../shared/components/ScreenTitle.jsx";
 import RecordFilterBar from "./components/RecordFilterBar.jsx";
 import RecordSearch from "./components/RecordSearch.jsx";
 import RecordForm from "./components/RecordForm.jsx";
@@ -55,9 +57,7 @@ export default function VinylScreen({ nav, db, online, onOpenDetail, onOpenForm,
   if (nav.form) {
     return (
       <div style={{ paddingTop: "var(--sp-3)" }}>
-        <h1 className="screen-title" style={{ marginBottom: "var(--sp-4)" }}>
-          {nav.form.initial?.id ? "Rediger plate" : "Ny plate"}
-        </h1>
+        <ScreenTitle>{nav.form.initial?.id ? "Rediger plate" : "Ny plate"}</ScreenTitle>
         <RecordForm
           initial={nav.form.initial}
           initialCover={nav.form.cover}
@@ -71,10 +71,10 @@ export default function VinylScreen({ nav, db, online, onOpenDetail, onOpenForm,
   if (nav.tab === "add") {
     return (
       <div style={{ paddingTop: "var(--sp-3)" }}>
-        <h1 className="screen-title" style={{ marginBottom: "var(--sp-4)" }}>Legg til plate</h1>
+        <ScreenTitle>Legg til plate</ScreenTitle>
         {!online && (
           <p className="hint" style={{ marginBottom: "var(--sp-3)" }}>
-            Uten nett: Discogs-søk er utilgjengelig, men du kan legge til manuelt.
+            Uten nett kan du ikke søke i Discogs, men du kan legge inn plata manuelt.
           </p>
         )}
         <RecordSearch
@@ -87,13 +87,14 @@ export default function VinylScreen({ nav, db, online, onOpenDetail, onOpenForm,
 
   return (
     <div className="stack">
+      <h1 className="sr-only">Platesamling</h1>
       <RecordFilterBar filters={filters} onChange={setFilters} />
       {visible.length === 0 ? (
         <div className="empty-state">
-          <span className="glyph" aria-hidden="true">♫</span>
+          <Glyph name="music" className="glyph-icon" />
           {records.length > 0 ? (
             <>
-              <p>Ingen plater matcher filtrene.</p>
+              <p>Ingen plater passer filtrene du har satt.</p>
               <button
                 type="button"
                 className="btn btn-ghost"
@@ -103,7 +104,7 @@ export default function VinylScreen({ nav, db, online, onOpenDetail, onOpenForm,
               </button>
             </>
           ) : (
-            <p>Samlingen er tom. Trykk «Legg til» og finn din første plate.</p>
+            <p>Ingen plater ennå. Gå til «Legg til» for å registrere den første.</p>
           )}
         </div>
       ) : (

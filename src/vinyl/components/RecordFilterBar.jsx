@@ -19,30 +19,35 @@ export default function RecordFilterBar({ filters, onChange }) {
           <input
             className="input"
             placeholder="Artist"
+            aria-label="Filtrer på artist"
             value={filters.artist || ""}
             onChange={(e) => set({ artist: e.target.value || undefined })}
           />
           <input
             className="input"
             placeholder="Plateselskap"
+            aria-label="Filtrer på plateselskap"
             value={filters.label || ""}
             onChange={(e) => set({ label: e.target.value || undefined })}
           />
           <input
             className="input"
             placeholder="Sjanger"
+            aria-label="Filtrer på sjanger"
             value={filters.genre || ""}
             onChange={(e) => set({ genre: e.target.value || undefined })}
           />
           <input
             className="input"
             placeholder="Stil"
+            aria-label="Filtrer på stil"
             value={filters.style || ""}
             onChange={(e) => set({ style: e.target.value || undefined })}
           />
           <input
             className="input"
             placeholder="Format"
+            aria-label="Filtrer på format"
             value={filters.format || ""}
             onChange={(e) => set({ format: e.target.value || undefined })}
           />

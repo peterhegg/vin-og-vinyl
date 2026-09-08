@@ -38,11 +38,12 @@ export default function FilterShell({
           <button
             type="button"
             className="btn-link"
-            style={{ alignSelf: "flex-start", minHeight: 36 }}
+            style={{ alignSelf: "flex-start" }}
             aria-expanded={expanded}
             onClick={() => setExpanded((v) => !v)}
           >
-            {expanded ? "Færre filtre ▲" : "Flere filtre ▼"}
+            {expanded ? "Færre filtre" : "Flere filtre"}
+            <span aria-hidden="true">{expanded ? " ▲" : " ▼"}</span>
           </button>
           {expanded && <div className="grid-2">{extra}</div>}
         </>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useFocusOnMount } from "../../shared/useFocusOnMount.js";
 import RatingInput from "../../shared/components/RatingInput.jsx";
 import SegmentedToggle from "../../shared/components/SegmentedToggle.jsx";
 import {
@@ -22,6 +23,7 @@ const dateOnly = (iso) => (iso ? String(iso).slice(0, 10) : null);
 /** Full-page single-record view. `cover` is the full-resolution image (ADR-4), fetched by the screen. */
 export default function RecordDetail({ record, cover, onEdit, onDelete, onBack, onSetStatus }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const headingRef = useFocusOnMount();
   const year = musicYear(record);
   const hero = cover || record.coverThumbBase64;
 
@@ -34,7 +36,14 @@ export default function RecordDetail({ record, cover, onEdit, onDelete, onBack, 
       {hero && <img className="detail-hero" src={hero} alt={`Omslag — ${recordLabel(record)}`} />}
 
       <div>
-        <h2 className="item-name" style={{ fontSize: "var(--fs-title)" }}>{record.artist || "Ukjent artist"}</h2>
+        <h2
+          className="item-name"
+          ref={headingRef}
+          tabIndex={-1}
+          style={{ fontSize: "var(--fs-title)", outline: "none" }}
+        >
+          {record.artist || "Ukjent artist"}
+        </h2>
         <p className="item-name" style={{ margin: "2px 0 0", color: "var(--text)" }}>{record.title}</p>
         <p className="hint" style={{ margin: "4px 0 0" }}>
           {[year, record.label, record.catalogNumber, record.country].filter(Boolean).join(" · ")}
@@ -82,7 +91,7 @@ export default function RecordDetail({ record, cover, onEdit, onDelete, onBack, 
             <dt />
             <dd>
               <a href={record.discogsUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)" }}>
-                Se på Discogs →
+                Se utgivelsen på Discogs <span aria-hidden="true">→</span>
               </a>
             </dd>
           </div>
@@ -94,7 +103,7 @@ export default function RecordDetail({ record, cover, onEdit, onDelete, onBack, 
           Sletter «{recordLabel(record)}» for godt. Dette kan ikke angres.
         </p>
       )}
-      <div className="row">
+      <div className="row" style={{ flexWrap: "wrap" }}>
         <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={() => onEdit(record)}>
           Rediger
         </button>

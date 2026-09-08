@@ -3,7 +3,7 @@ import { useBarcode } from "../useBarcode.js";
 
 /** Full-screen camera overlay. Calls onDetected(ean) once, then onClose(). */
 export default function BarcodeScanner({ onDetected, onClose }) {
-  const { supported, scanning, error, videoRef, start, stop, debug } = useBarcode({
+  const { supported, scanning, error, videoRef, start, stop } = useBarcode({
     onDetected: (ean) => {
       onDetected(ean);
       onClose();
@@ -21,6 +21,11 @@ export default function BarcodeScanner({ onDetected, onClose }) {
   useEffect(() => {
     const onKeyDown = (e) => {
       if (e.key === "Escape") onClose();
+      // Only the close button is focusable; keep Tab from reaching the page behind.
+      if (e.key === "Tab") {
+        e.preventDefault();
+        closeBtnRef.current?.focus();
+      }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
@@ -55,16 +60,14 @@ export default function BarcodeScanner({ onDetected, onClose }) {
             className="hint"
             style={{
               position: "absolute",
-              bottom: 8,
+              bottom: 12,
               left: 16,
               right: 16,
-              fontSize: 11,
-              color: "rgba(255,255,255,0.6)",
+              textAlign: "center",
+              color: "rgba(255,255,255,0.8)",
             }}
           >
-            v2 · {debug.framesChecked} bilder · video: {debug.videoRes ?? "?"} · zoom-canvas: {debug.canvasRes ?? "?"} ·
-            lommelykt: {debug.torch} · formater: {debug.formats.length ? debug.formats.join(", ") : "ukjent"} ·{" "}
-            {debug.anySeen ? `sist sett: ${debug.anySeen.join(", ")}` : "ingen kode sett ennå"}
+            Hold strekkoden innenfor rammen
           </p>
         )}
       </div>

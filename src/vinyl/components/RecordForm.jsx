@@ -112,7 +112,7 @@ export default function RecordForm({ initial, initialCover = null, onSave, onCan
           className="hint"
           style={{ color: "var(--accent)" }}
         >
-          Åpne utgivelsen på Discogs →
+          Se utgivelsen på Discogs <span aria-hidden="true">→</span>
         </a>
       )}
 
@@ -219,11 +219,12 @@ export default function RecordForm({ initial, initialCover = null, onSave, onCan
       <button
         type="button"
         className="btn-link"
-        style={{ alignSelf: "flex-start", minHeight: 36, paddingLeft: 0 }}
+        style={{ alignSelf: "flex-start", paddingLeft: 0 }}
         aria-expanded={showMore}
         onClick={() => setShowMore((v) => !v)}
       >
-        {showMore ? "Færre detaljer ▲" : "Flere detaljer ▼"}
+        {showMore ? "Færre detaljer" : "Flere detaljer"}
+        <span aria-hidden="true">{showMore ? " ▲" : " ▼"}</span>
       </button>
 
       {showMore && (

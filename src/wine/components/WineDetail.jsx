@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useFocusOnMount } from "../../shared/useFocusOnMount.js";
 import RatingInput from "../../shared/components/RatingInput.jsx";
 
 const Row = ({ label, value }) =>
@@ -12,6 +13,7 @@ const Row = ({ label, value }) =>
 /** Full-page single-wine view. */
 export default function WineDetail({ wine, onEdit, onDelete, onToggleWantAgain, onBack }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const headingRef = useFocusOnMount();
 
   return (
     <div className="stack" style={{ paddingTop: "var(--sp-3)" }}>
@@ -24,7 +26,12 @@ export default function WineDetail({ wine, onEdit, onDelete, onToggleWantAgain, 
       )}
 
       <div>
-        <h2 className="item-name" style={{ fontSize: "var(--fs-title)" }}>
+        <h2
+          className="item-name"
+          ref={headingRef}
+          tabIndex={-1}
+          style={{ fontSize: "var(--fs-title)", outline: "none" }}
+        >
           {wine.name}
           {wine.vintage ? ` ${wine.vintage}` : ""}
         </h2>
@@ -39,9 +46,13 @@ export default function WineDetail({ wine, onEdit, onDelete, onToggleWantAgain, 
         type="button"
         className="btn btn-ghost"
         onClick={() => onToggleWantAgain(!wine.wantAgain)}
+        aria-pressed={wine.wantAgain}
         style={{ alignSelf: "flex-start" }}
       >
-        {wine.wantAgain ? "⭐ Vil ha igjen" : "☆ Vil ha igjen?"}
+        <span aria-hidden="true" style={{ color: "var(--gold)" }}>
+          {wine.wantAgain ? "★" : "☆"}
+        </span>
+        Vil ha igjen
       </button>
 
       {wine.myNotes && <div className="note-block">{wine.myNotes}</div>}
@@ -67,7 +78,7 @@ export default function WineDetail({ wine, onEdit, onDelete, onToggleWantAgain, 
             <dt />
             <dd>
               <a href={wine.vinmonopoletUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)" }}>
-                Se på Vinmonopolet →
+                Se vinen på Vinmonopolet <span aria-hidden="true">→</span>
               </a>
             </dd>
           </div>
@@ -79,7 +90,7 @@ export default function WineDetail({ wine, onEdit, onDelete, onToggleWantAgain, 
           Sletter «{wine.name || "vinen"}» for godt. Dette kan ikke angres.
         </p>
       )}
-      <div className="row">
+      <div className="row" style={{ flexWrap: "wrap" }}>
         <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={() => onEdit(wine)}>
           Rediger
         </button>

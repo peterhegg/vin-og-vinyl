@@ -52,7 +52,7 @@ export default function WineForm({ initial, onSave, onCancel }) {
           className="hint"
           style={{ color: "var(--accent)" }}
         >
-          Åpne produktsiden på Vinmonopolet for detaljer →
+          Se produktsiden på Vinmonopolet <span aria-hidden="true">→</span>
         </a>
       )}
 
@@ -151,7 +151,7 @@ export default function WineForm({ initial, onSave, onCancel }) {
 
       <div className="field">
         <label>Mine korkpoeng</label>
-        <RatingInput glyph="cork" label="Korkpoeng" value={wine.myScore} onChange={(myScore) => set({ myScore })} />
+        <RatingInput glyph="cork" label="Mine korkpoeng" value={wine.myScore} onChange={(myScore) => set({ myScore })} />
       </div>
 
       <div className="field">

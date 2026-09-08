@@ -70,8 +70,8 @@ export default function WineSearch({ onSelect, onManual }) {
       {results.length > 0 && (
         <>
           <p className="hint" style={{ margin: 0 }}>
-            Velg en vin for å forhåndsutfylle navn. Vinmonopolet-API-et gir kun navn — resten (produsent, pris,
-            druer m.m.) fyller du inn selv, eventuelt med produktsiden åpen ved siden av.
+            Velg en vin for å fylle inn navnet. Vinmonopolet gir bare navnet — produsent, pris, druer og
+            resten fyller du inn selv, gjerne med produktsiden åpen ved siden av.
           </p>
           <ul className="plain-list">
             {results.map((r, i) => (
@@ -86,7 +86,7 @@ export default function WineSearch({ onSelect, onManual }) {
       )}
 
       <button type="button" className="btn btn-ghost" onClick={onManual}>
-        + Legg til manuelt
+        <span aria-hidden="true">+</span> Legg til manuelt
       </button>
 
       {scanning && (

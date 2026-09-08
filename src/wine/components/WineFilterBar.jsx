@@ -17,30 +17,35 @@ export default function FilterBar({ filters, onChange }) {
           <input
             className="input"
             placeholder="Land"
+            aria-label="Filtrer på land"
             value={filters.country || ""}
             onChange={(e) => set({ country: e.target.value || undefined })}
           />
           <input
             className="input"
             placeholder="Region"
+            aria-label="Filtrer på region"
             value={filters.region || ""}
             onChange={(e) => set({ region: e.target.value || undefined })}
           />
           <input
             className="input"
             placeholder="Drue"
+            aria-label="Filtrer på drue"
             value={filters.grape || ""}
             onChange={(e) => set({ grape: e.target.value || undefined })}
           />
           <input
             className="input"
             placeholder="Produsent"
+            aria-label="Filtrer på produsent"
             value={filters.producer || ""}
             onChange={(e) => set({ producer: e.target.value || undefined })}
           />
           <input
             className="input"
             placeholder="Leverandør"
+            aria-label="Filtrer på leverandør"
             value={filters.supplier || ""}
             onChange={(e) => set({ supplier: e.target.value || undefined })}
           />
