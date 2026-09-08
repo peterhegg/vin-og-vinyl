@@ -139,21 +139,49 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 - **Modell:** Fable · **Effort:** medium · **Egen chat:** ja
 - **Skills:** `theme-factory` (tokens), `canvas-design` (app-ikon)
 - Behold burgunder vin-palett, legg til vinyl-aksent (grafitt/blekk + messing). Nytt app-ikon (vin + vinyl-motiv): 192/512/512-maskable, favicon, apple-touch. Oppdater `docs/ICON_PHILOSOPHY.md`.
+- `--accent`/`--accent-soft` finnes alt (gull-alias fra Fase 4) og brukes av tellelinjas
+  `data-active`, vinyl-kortene og `RatingInput` med `glyph="disc"`. Bytt dem per
+  `data-collection` på `.app-shell` (ADR-8) — ikke globalt, ellers får vin-siden vinylfarge.
+- Sjekk kontrasten på disc-glyfen på nytt etter fargebyttet; den ble justert i Fase 4.
 
 ### Fase 8 — Polish
 - **Modell:** Sonnet · **Effort:** medium · **Egen chat:** nei
 - **Skills:** `accessibility-review`, `ux-copy`
 - Tomtilstander, mikrotekst, 48px trykkmål, offline-banner-tekst, tastatur/skjermleser.
+- Innstillinger har nå fire importmeldinger (ugyldig fil, for ny versjon, tom fil, feilet
+  import) + to travle knappetilstander. Gå gjennom dem med `ux-copy`.
+- **Reell mangel funnet i Fase 6:** når begge samlinger er tomme er eksport-knappen
+  `disabled` uten et ord om hvorfor. Innstillinger trenger en tomtilstand.
 
 ### Fase 9 — Sikkerhetsgjennomgang
 - **Modell:** Opus · **Effort:** think hard · **Egen chat:** ja
 - **Skills:** `/sikkerhetsanalyse` (auto), deretter `/bugreview`
 - Fokus: Discogs-proxy (SSRF, token-lekkasje, CORS, rate-limit), import-sanering på nye felt, XSS i nye felt, CSP.
+- Nytt etter Fase 6 — `shared/backup.js` er eneste vei inn i basen, så den er hele
+  angrepsflaten for importerte data:
+  - Prototypeforurensning: en fil kan inneholde `__proto__`/`constructor` som nøkler.
+    `JSON.parse` lager egne felt (trigger ikke setteren) og `createRecord`/`createWine`
+    leser bare navngitte felt, men verifiser det — det er ikke testet.
+  - Datatap som angrep: en importfil kan slette cover-rader for plater brukeren alt har,
+    ved å oppgi samme `id` uten cover. Det er bevisst (ellers arver posten feil bilde),
+    men vurder om import bør si fra hva som overskrives.
+  - Ingen størrelsesgrense på importfil. `file.text()` + `JSON.parse` på en flere hundre
+    MB stor fil kan drepe fanen på telefon. Vurder et tak med tydelig feilmelding.
+  - `saveBlob` holder object-URL-en i live i 60 s. Sjekk at ingenting lekker.
 
 ### Fase 10 — Test + verifiser prod-bundle
 - **Modell:** Sonnet · **Effort:** medium · **Egen chat:** nei (m/ Fase 9)
 - **Skills:** `run`
 - Playwright i scratchpad (ikke i repo, som sist). Bygg prod-bundle, verifiser vin + vinyl-flyt, offline, PWA-install.
+- Ta med eksport → import-rundturen i prod-bundle: last ned ekte fil, tøm basen, importer
+  tilbake, sjekk at cover er med. Det er kun verifisert på dev-serveren så langt.
+- Harness-gotchaer (kostet tid i Fase 6):
+  - Dev-serveren serverer under base-stien: `http://localhost:<port>/vin-og-vinyl/…`,
+    både for harness-sida og for `await import('/vin-og-vinyl/src/…')`.
+  - `getAll()` gir **nøkkelrekkefølge**, ikke innsettingsrekkefølge (`w1, w10, w100`).
+    Sammenlign på `id`, aldri på indeks.
+  - Antall IndexedDB-transaksjoner kan telles ved å midlertidig wrappe
+    `IDBDatabase.prototype.transaction` — den enkleste måten å bevise atomisitet på.
 
 ### Fase 11 — Deploy-handoff + memory
 - **Modell:** Sonnet · **Effort:** low · **Egen chat:** nei
@@ -273,6 +301,23 @@ atomisitet, stykkevis skriving over flush-grensene (250 viner + 45 plater), full
 eksport → tøm → import, og ekte v1-fil. Deretter hele UI-flyten i appen: import fra
 filvelgeren, «2 viner · 2 plater» i tellelinja, miniatyr tegnet, fullbilde i `covers`,
 og alle fire feilmeldingene. Prod-bygg grønt.
+
+## Fast praksis (etablert Fase 0–6, gjelder resten)
+
+- **Verifisering uten testrammeverk:** skriv en harness i prosjektroten
+  (`harness-faseN.html` + `.js`), kjør den mot dev-serveren, flytt den til scratchpad og
+  slett den fra repoet før commit. Aldri sjekk inn harnessen.
+- **Skriv assertions mot invarianten, ikke mot en antatt rekkefølge.** To grønne
+  testrunder i Fase 6 var egentlig feil test, ikke feil kode.
+- **Async før transaksjon.** Alt som `await`-er (canvas, `makeThumbnail`, normalisering)
+  må skje før en IndexedDB-transaksjon åpnes — en ledig transaksjon auto-committer.
+  Dette er nå brutt tre steder på rad hvis man ikke passer på: `dbPutRecord`,
+  `dbBulkPutRecords` (fjernet) og `importBackup`.
+- **Én vei inn i basen per operasjon.** Fase 6 fjernet de parallelle import-veiene.
+  Hvis en ny fase trenger å skrive mange poster, utvid `shared/backup.js` eller den
+  eksisterende hook-en — ikke lag en ny bulk-funksjon ved siden av.
+- Commit + push når fasen er ferdig, kryss av i «Fremdrift», flytt «Nåværende fase» og
+  skriv et «Fase N gjort»-avsnitt med det som faktisk avvek fra planen.
 
 ## Per-fase kickoff-meldinger
 
