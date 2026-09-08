@@ -1,46 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createWine, normalizeWine } from "../data/wineSchema.js";
+import { openDB, reqToPromise, txDone, getStore, STORE } from "../shared/idb.js";
 
-const DB_NAME = "vinkjeller-db";
-const DB_VERSION = 1;
-const STORE = "wines";
-
-let dbPromise = null;
-
-function openDB() {
-  if (dbPromise) return dbPromise;
-  dbPromise = new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(STORE)) {
-        const store = db.createObjectStore(STORE, { keyPath: "id" });
-        store.createIndex("status", "status", { unique: false });
-        store.createIndex("country", "country", { unique: false });
-        store.createIndex("region", "region", { unique: false });
-        store.createIndex("grapes", "grapes", { unique: false, multiEntry: true });
-        store.createIndex("type", "type", { unique: false });
-        store.createIndex("myScore", "myScore", { unique: false });
-        store.createIndex("wantAgain", "wantAgain", { unique: false });
-        store.createIndex("addedAt", "addedAt", { unique: false });
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-  return dbPromise;
-}
-
-function tx(db, mode) {
-  return db.transaction(STORE, mode).objectStore(STORE);
-}
-
-function reqToPromise(request) {
-  return new Promise((resolve, reject) => {
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
+// The database itself is owned by src/shared/idb.js — name, version and upgrade
+// ladder live there so the wine and vinyl hooks can never disagree (ADR-3).
+const tx = (db, mode) => getStore(db, STORE.WINES, mode);
 
 // ---- Low-level DB operations ----
 
@@ -76,7 +40,7 @@ export async function dbGetAllWines() {
 /** Bulk upsert used by import. Returns count added/overwritten. */
 export async function dbBulkPut(wines) {
   const db = await openDB();
-  const store = db.transaction(STORE, "readwrite").objectStore(STORE);
+  const store = tx(db, "readwrite");
   let count = 0;
   for (const raw of wines) {
     const wine = normalizeWine(raw);
@@ -84,10 +48,7 @@ export async function dbBulkPut(wines) {
     store.put(wine);
     count++;
   }
-  await new Promise((resolve, reject) => {
-    store.transaction.oncomplete = resolve;
-    store.transaction.onerror = () => reject(store.transaction.error);
-  });
+  await txDone(store.transaction);
   return count;
 }
 

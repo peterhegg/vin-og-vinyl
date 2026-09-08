@@ -171,7 +171,7 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 
 - [x] Fase 0 — Rebrand + repo-rename ✓ 2026-09-08
 - [x] Fase 1 — Arkitektur (ADR) ✓ 2026-09-08
-- [ ] Fase 2 — Vinyl-datamodell + DB
+- [x] Fase 2 — Vinyl-datamodell + DB ✓ 2026-09-08
 - [ ] Fase 3 — Discogs-proxy
 - [ ] Fase 4 — Vinyl-UI
 - [ ] Fase 5 — Kombinert navigasjon
@@ -182,7 +182,7 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 - [ ] Fase 10 — Test
 - [ ] Fase 11 — Deploy-handoff
 
-**Nåværende fase:** Fase 2 — Vinyl-datamodell + IndexedDB-lag. Opus, think hard.
+**Nåværende fase:** Fase 3 — Discogs Worker-proxy + `useDiscogs`. Opus, ultrathink på proxy-sikkerhet.
 
 Fase 0 gjort: navn byttet i alle filer (DB_NAME bevisst beholdt), repo renamet på
 GitHub til `vin-og-vinyl` (remote oppdatert, redirect aktiv), prod-bygg verifisert
@@ -195,6 +195,13 @@ planen, dokumentert i ADR-ens «Avvik»-tabell og innarbeidet her: nye filstier
 miniatyr + `covers`-store, `covers` som ekstra objectstore, og engelske statusverdier
 (`"owned"` / `"wishlist"`). `src/shared/sanitize.js` og `src/vinyl/recordSchema.js`
 opprettet, prod-bygg fortsatt grønt.
+
+Fase 2 gjort: `src/shared/idb.js` (delt åpner, versjonsstige v1→v2), `src/shared/image.js`
+(`compressImage` + `makeThumbnail`), ferdig `src/vinyl/recordSchema.js` og
+`src/vinyl/useRecordDB.js` (CRUD + cover-splitting + `filterAndSortRecords` + `SORT` + stats).
+`useWineDB` bruker nå den delte åpneren. Verifisert i nettleser mot en base som faktisk
+sto på v1: 54 assertions grønne — migrering bevarer viner og indekser, cover-splitting,
+sanering av fiendtlig import-input, filter/sortering, og vin-siden uten regresjon.
 
 ## Per-fase kickoff-meldinger
 
