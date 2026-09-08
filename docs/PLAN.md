@@ -178,14 +178,14 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 - [x] Fase 3 — Discogs-proxy ✓ 2026-09-08
 - [x] Fase 4 — Vinyl-UI ✓ 2026-09-08
 - [x] Fase 5 — Kombinert navigasjon ✓ 2026-09-08
-- [ ] Fase 6 — Eksport/import v2
+- [x] Fase 6 — Eksport/import v2 ✓ 2026-09-08
 - [ ] Fase 7 — Tema + ikoner
 - [ ] Fase 8 — Polish
 - [ ] Fase 9 — Sikkerhet
 - [ ] Fase 10 — Test
 - [ ] Fase 11 — Deploy-handoff
 
-**Nåværende fase:** Fase 6 — Eksport/import v2 (`shared/backup.js`). Opus, medium. Kan deles med Fase 3 eller 5.
+**Nåværende fase:** Fase 7 — Tema + ikoner. Fable, medium. Egen chat.
 
 Fase 0 gjort: navn byttet i alle filer (DB_NAME bevisst beholdt), repo renamet på
 GitHub til `vin-og-vinyl` (remote oppdatert, redirect aktiv), prod-bygg verifisert
@@ -251,6 +251,28 @@ sammensatte kall. Verifisert i nettleser: hele back-stacken (edit→detalj→lis
 samling), eksport/import rundtur (v2 + v1), ingen vin-regresjon. Prod-bygg grønt.
 Fase 6 herder eksportformatet (`shared/backup.js`: cover-materialisering, én
 import-transaksjon, blob stykkevis).
+
+Fase 6 gjort: `src/shared/backup.js` eier nå hele sikkerhetskopi-formatet — skriving,
+v1/v2-lesing, sanering og import. **Skriving:** hver post `JSON.stringify`-es for seg og
+bufferet foldes inn i Blob-en hver batch, så JS-heapen aldri holder hele fila (ADR-6s
+kjente begrensning). **Cover:** eksport slår inn fullbildet fra `covers` og leser dem i
+batcher på 20 — 45 plater ga 3 transaksjoner, ikke 45. Coverløse plater får ikke feltet.
+**Import:** én transaksjon over `wines` + `records` + `covers` (verifisert ved å telle
+`IDBDatabase.transaction`-kall: 1). Normalisering og miniatyr-utleding skjer før
+transaksjonen åpnes, ellers auto-committer den. Overskriving uten cover sletter cover-raden,
+så en importert post ikke arver fullbildet til den den erstattet. **Lesing:** v2 → begge
+lister; naken array eller `{wines}` uten `version` → v1, kun viner (records i en v1-fil
+ignoreres); `version` > 2 → avvist uten delvis import. Feilkoder (`invalid_json`,
+`not_a_backup`, `future_version`, `empty`) styrer norsk melding i UI-et.
+De gamle import-veiene er fjernet (`dbBulkPut`/`importWines`, `dbBulkPutRecords`/
+`importRecords`) så det finnes én vei inn; `SettingsScreen` laster begge hooks på nytt
+etter import, og `useRecordDB.refresh` tømmer cover-cachen siden importen skriver bak
+hookens rygg. Verifisert i nettleser: 78 assertions grønne (harness i scratchpad, ikke i
+repo) — versjonsgjenkjenning, fiendtlig input på begge typer, cover-splitting,
+atomisitet, stykkevis skriving over flush-grensene (250 viner + 45 plater), full rundtur
+eksport → tøm → import, og ekte v1-fil. Deretter hele UI-flyten i appen: import fra
+filvelgeren, «2 viner · 2 plater» i tellelinja, miniatyr tegnet, fullbilde i `covers`,
+og alle fire feilmeldingene. Prod-bygg grønt.
 
 ## Per-fase kickoff-meldinger
 

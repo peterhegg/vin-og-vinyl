@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { createWine, normalizeWine } from "./wineSchema.js";
-import { openDB, reqToPromise, txDone, getStore, STORE } from "../shared/idb.js";
+import { createWine } from "./wineSchema.js";
+import { openDB, reqToPromise, getStore, STORE } from "../shared/idb.js";
 
 // The database itself is owned by src/shared/idb.js — name, version and upgrade
 // ladder live there so the wine and vinyl hooks can never disagree (ADR-3).
@@ -35,21 +35,6 @@ export async function dbGetWine(id) {
 export async function dbGetAllWines() {
   const db = await openDB();
   return reqToPromise(tx(db, "readonly").getAll());
-}
-
-/** Bulk upsert used by import. Returns count added/overwritten. */
-export async function dbBulkPut(wines) {
-  const db = await openDB();
-  const store = tx(db, "readwrite");
-  let count = 0;
-  for (const raw of wines) {
-    const wine = normalizeWine(raw);
-    if (!wine) continue;
-    store.put(wine);
-    count++;
-  }
-  await txDone(store.transaction);
-  return count;
 }
 
 // ---- Pure filter + sort (client-side, used by FilterBar) ----
@@ -163,12 +148,6 @@ export function useWineDB() {
     [wines]
   );
 
-  const importWines = useCallback(async (list) => {
-    const count = await dbBulkPut(list);
-    await refresh();
-    return count;
-  }, [refresh]);
-
   const stats = useMemo(() => {
     const tasted = wines.filter((w) => w.status === "smakt");
     const wish = wines.filter((w) => w.status === "ønske");
@@ -186,6 +165,5 @@ export function useWineDB() {
     updateWine,
     deleteWine,
     getWine,
-    importWines,
   };
 }

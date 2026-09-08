@@ -1,39 +1,39 @@
 import { useRef, useState } from "react";
+import { exportBackup, importBackupFile, BackupError } from "../backup.js";
 
-const today = () => new Date().toISOString().slice(0, 10);
+const ERROR_TEXT = {
+  invalid_json: "Fila kunne ikke leses. Sjekk at det er en gyldig Vin og vinyl-eksport.",
+  not_a_backup: "Fila kunne ikke leses. Sjekk at det er en gyldig Vin og vinyl-eksport.",
+  future_version:
+    "Fila er laget av en nyere versjon av appen. Oppdater appen før du importerer — ingenting ble endret.",
+  export_failed: "Kunne ikke lage sikkerhetskopien. Prøv igjen.",
+  import_failed: "Importen feilet. Ingenting ble endret.",
+};
 
-function downloadJson(filename, data) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
 /**
- * One backup file for the whole app — both collections. Reads v1 files (a bare
- * array or `{ wines }`) as wine-only, and v2 files (`{ wines, records }`) as both.
- *
- * Fase 6 replaces the guts with `shared/backup.js`: cover materialisation,
- * a single import transaction, and a blob built piecewise (ADR-6). The file
- * shape written here is already the v2 shape so those files stay readable.
+ * One backup file for the whole app. The format itself — writing, v1/v2 reading,
+ * sanitising and the single import transaction — lives in `shared/backup.js`.
+ * This component only picks the file and reports what happened.
  */
-export default function ExportImport({ wines, records, onImportWines, onImportRecords }) {
+export default function ExportImport({ wines, records, onImported }) {
   const fileRef = useRef(null);
-  const [result, setResult] = useState(null); // { wines, records } | { error }
+  const [busy, setBusy] = useState(null); // "export" | "import" | null
+  const [result, setResult] = useState(null); // { wines, records } | { error: code }
 
   const total = wines.length + records.length;
 
-  const handleExport = () => {
-    downloadJson(`vin-og-vinyl-eksport-${today()}.json`, {
-      app: "vin-og-vinyl",
-      version: 2,
-      exportedAt: new Date().toISOString(),
-      wines,
-      records,
-    });
+  const handleExport = async () => {
+    setResult(null);
+    setBusy("export");
+    try {
+      await exportBackup({ wines, records });
+    } catch {
+      setResult({ error: "export_failed" });
+    } finally {
+      setBusy(null);
+    }
   };
 
   const handleFile = async (e) => {
@@ -41,32 +41,26 @@ export default function ExportImport({ wines, records, onImportWines, onImportRe
     e.target.value = "";
     if (!file) return;
     setResult(null);
+    setBusy("import");
     try {
-      const parsed = JSON.parse(await file.text());
-      const wineList = Array.isArray(parsed)
-        ? parsed
-        : Array.isArray(parsed?.wines)
-        ? parsed.wines
-        : [];
-      const recordList = Array.isArray(parsed?.records) ? parsed.records : [];
-      if (!wineList.length && !recordList.length) throw new Error("empty");
-
-      // The hooks validate/normalise (and split record covers) and return counts.
-      const w = wineList.length ? await onImportWines(wineList) : 0;
-      const r = recordList.length ? await onImportRecords(recordList) : 0;
-      setResult({ wines: w, records: r });
-    } catch {
-      setResult({ error: true });
+      const counts = await importBackupFile(file);
+      setResult(counts);
+      await onImported?.();
+    } catch (err) {
+      setResult({ error: err instanceof BackupError ? err.code : "import_failed" });
+    } finally {
+      setBusy(null);
     }
   };
 
   const summary = () => {
-    if (!result || result.error) return null;
     const parts = [
-      result.wines > 0 && `${result.wines} vin${result.wines === 1 ? "" : "er"}`,
-      result.records > 0 && `${result.records} plate${result.records === 1 ? "" : "r"}`,
+      result.wines > 0 && plural(result.wines, "vin", "viner"),
+      result.records > 0 && plural(result.records, "plate", "plater"),
     ].filter(Boolean);
-    return parts.length ? `Importerte ${parts.join(" og ")}.` : "Fant ingenting å importere i fila.";
+    return parts.length
+      ? `Importerte ${parts.join(" og ")}.`
+      : "Fant ingenting å importere i fila.";
   };
 
   return (
@@ -74,10 +68,15 @@ export default function ExportImport({ wines, records, onImportWines, onImportRe
       <div className="field">
         <label>Eksporter</label>
         <p className="hint" style={{ margin: 0 }}>
-          Last ned hele appen — både viner og plater — som én JSON-fil.
+          Last ned hele appen — både viner og plater, med coverbilder — som én JSON-fil.
         </p>
-        <button type="button" className="btn btn-ghost" onClick={handleExport} disabled={!total}>
-          ↓ Last ned sikkerhetskopi
+        <button
+          type="button"
+          className="btn btn-ghost"
+          onClick={handleExport}
+          disabled={!total || busy !== null}
+        >
+          {busy === "export" ? "Lager sikkerhetskopi …" : "↓ Last ned sikkerhetskopi"}
         </button>
       </div>
 
@@ -86,18 +85,27 @@ export default function ExportImport({ wines, records, onImportWines, onImportRe
       <div className="field">
         <label>Importer</label>
         <p className="hint" style={{ margin: 0 }}>
-          Velg en tidligere eksportert JSON-fil. Oppføringer med samme id blir overskrevet, resten legges til.
+          Velg en tidligere eksportert JSON-fil. Oppføringer med samme id blir overskrevet,
+          resten legges til. Eldre filer med bare viner virker fortsatt.
         </p>
-        <button type="button" className="btn btn-ghost" onClick={() => fileRef.current?.click()}>
-          ↑ Velg fil og importer
+        <button
+          type="button"
+          className="btn btn-ghost"
+          onClick={() => fileRef.current?.click()}
+          disabled={busy !== null}
+        >
+          {busy === "import" ? "Importerer …" : "↑ Velg fil og importer"}
         </button>
         <input ref={fileRef} type="file" accept="application/json" hidden onChange={handleFile} />
 
         <div aria-live="polite">
-          {result?.error && (
-            <p className="error-text">
-              Fila kunne ikke leses. Sjekk at det er en gyldig Vin og vinyl-eksport.
+          {result?.error === "empty" && (
+            <p style={{ color: "var(--text-soft)", fontSize: 14, fontWeight: 500 }}>
+              Fant ingenting å importere i fila.
             </p>
+          )}
+          {result?.error && result.error !== "empty" && (
+            <p className="error-text">{ERROR_TEXT[result.error] ?? ERROR_TEXT.import_failed}</p>
           )}
           {result && !result.error && (
             <p

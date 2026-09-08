@@ -4,7 +4,6 @@ import { makeThumbnail } from "../shared/image.js";
 import { safeImageDataUrl } from "../shared/sanitize.js";
 import {
   createRecord,
-  normalizeRecord,
   musicYear,
   GOLDMINE_RANK,
   RECORD_STATUS,
@@ -79,35 +78,6 @@ export async function dbGetCover(id) {
   const db = await openDB();
   const row = await reqToPromise(getStore(db, STORE.COVERS).get(id));
   return safeImageDataUrl(row?.full) ?? null;
-}
-
-/**
- * Bulk upsert used by import. Accepts records that carry `coverImageBase64`
- * (how a backup file stores the joined cover — see ADR-6) and splits it back out.
- * Returns the number of records written.
- */
-export async function dbBulkPutRecords(list) {
-  const prepared = [];
-  for (const raw of list) {
-    const entry = normalizeRecord(raw);
-    if (!entry) continue;
-    const full = safeImageDataUrl(raw?.coverImageBase64);
-    // A hand-made file may carry the full cover but no thumbnail; derive one.
-    if (full && !entry.coverThumbBase64) {
-      entry.coverThumbBase64 = safeImageDataUrl(await makeThumbnail(full));
-    }
-    prepared.push({ entry, full });
-  }
-  if (!prepared.length) return 0;
-
-  const db = await openDB();
-  const { tx, stores } = getStores(db, [STORE.RECORDS, STORE.COVERS], "readwrite");
-  for (const { entry, full } of prepared) {
-    stores[STORE.RECORDS].put(entry);
-    if (full) stores[STORE.COVERS].put({ id: entry.id, full });
-  }
-  await txDone(tx);
-  return prepared.length;
 }
 
 // ---- Pure filter + sort (client-side, used by the vinyl FilterBar) ----
@@ -214,6 +184,8 @@ export function useRecordDB() {
 
   const refresh = useCallback(async () => {
     try {
+      // An import writes behind the hook's back, so a reload cannot trust the cache.
+      coverCache.current.clear();
       setRecords(await dbGetAllRecords());
     } catch (e) {
       setError(e);
@@ -257,13 +229,6 @@ export function useRecordDB() {
     return full;
   }, []);
 
-  const importRecords = useCallback(async (list) => {
-    const count = await dbBulkPutRecords(list);
-    coverCache.current.clear();
-    await refresh();
-    return count;
-  }, [refresh]);
-
   const stats = useMemo(() => {
     const owned = records.filter((r) => r.status === RECORD_STATUS.OWNED);
     const wish = records.filter((r) => r.status === RECORD_STATUS.WISH);
@@ -284,6 +249,5 @@ export function useRecordDB() {
     deleteRecord,
     getRecord,
     getCover,
-    importRecords,
   };
 }
