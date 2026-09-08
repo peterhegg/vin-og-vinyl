@@ -77,7 +77,7 @@ export default function WineSearch({ onSelect, onManual }) {
             {results.map((r, i) => (
               <li key={r.vinmonopoletId ?? i}>
                 <button type="button" className="result-item" onClick={() => onSelect(r)}>
-                  <span className="wine-name result-title">{r.name}</span>
+                  <span className="item-name result-title">{r.name}</span>
                 </button>
               </li>
             ))}

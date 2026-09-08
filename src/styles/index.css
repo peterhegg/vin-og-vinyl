@@ -260,10 +260,10 @@ input, select, textarea {
 }
 
 /* ============================================================
-   Wine name (serif italic)
+   Item name (serif italic) — wine name, record artist
    ============================================================ */
 
-.wine-name {
+.item-name {
   font-family: var(--font-display);
   font-style: italic;
   font-weight: 600;
@@ -274,9 +274,6 @@ input, select, textarea {
    Cards & lists
    ============================================================ */
 
-/* .wine-card is renamed to .item-card in the Fase 5 mechanical pass (ADR-8);
-   vinyl already uses the neutral name, so the rule is shared until then. */
-.wine-card,
 .item-card {
   width: 100%;
   display: flex;
@@ -289,7 +286,6 @@ input, select, textarea {
   box-shadow: var(--shadow-soft);
   transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
-.wine-card:active,
 .item-card:active { transform: scale(0.985); }
 
 .card-thumb {

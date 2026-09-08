@@ -23,7 +23,7 @@ export default function RecordCard({ record, onOpen }) {
 
       <div className="card-body">
         <div className="card-title-row">
-          <span className="wine-name card-title">{record.artist || "Ukjent artist"}</span>
+          <span className="item-name card-title">{record.artist || "Ukjent artist"}</span>
           {record.status === RECORD_STATUS.WISH && (
             <span className="tag" aria-label="På ønskelista">Ønske</span>
           )}

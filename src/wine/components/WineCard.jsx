@@ -3,7 +3,7 @@ import RatingInput from "../../shared/components/RatingInput.jsx";
 /** Compact card for the wine list. */
 export default function WineCard({ wine, onOpen }) {
   return (
-    <button type="button" className="wine-card" onClick={() => onOpen(wine)}>
+    <button type="button" className="item-card" onClick={() => onOpen(wine)}>
       <div className="card-thumb">
         {wine.labelImageBase64 ? (
           <img src={wine.labelImageBase64} alt="" />
@@ -14,7 +14,7 @@ export default function WineCard({ wine, onOpen }) {
 
       <div className="card-body">
         <div className="card-title-row">
-          <span className="wine-name card-title">
+          <span className="item-name card-title">
             {wine.name || "Uten navn"}
             {wine.vintage ? ` ${wine.vintage}` : ""}
           </span>

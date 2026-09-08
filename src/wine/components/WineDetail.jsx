@@ -24,7 +24,7 @@ export default function WineDetail({ wine, onEdit, onDelete, onToggleWantAgain, 
       )}
 
       <div>
-        <h2 className="wine-name" style={{ fontSize: "var(--fs-title)" }}>
+        <h2 className="item-name" style={{ fontSize: "var(--fs-title)" }}>
           {wine.name}
           {wine.vintage ? ` ${wine.vintage}` : ""}
         </h2>

@@ -34,8 +34,8 @@ export default function RecordDetail({ record, cover, onEdit, onDelete, onBack, 
       {hero && <img className="detail-hero" src={hero} alt={`Omslag — ${recordLabel(record)}`} />}
 
       <div>
-        <h2 className="wine-name" style={{ fontSize: "var(--fs-title)" }}>{record.artist || "Ukjent artist"}</h2>
-        <p className="wine-name" style={{ margin: "2px 0 0", color: "var(--text)" }}>{record.title}</p>
+        <h2 className="item-name" style={{ fontSize: "var(--fs-title)" }}>{record.artist || "Ukjent artist"}</h2>
+        <p className="item-name" style={{ margin: "2px 0 0", color: "var(--text)" }}>{record.title}</p>
         <p className="hint" style={{ margin: "4px 0 0" }}>
           {[year, record.label, record.catalogNumber, record.country].filter(Boolean).join(" · ")}
         </p>

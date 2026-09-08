@@ -100,7 +100,7 @@ export default function RecordSearch({ onSelect, onManual }) {
                   onClick={() => choose(hit)}
                   disabled={pickingId != null}
                 >
-                  <span className="wine-name result-title">{artist || title}</span>
+                  <span className="item-name result-title">{artist || title}</span>
                   {artist && <span className="result-meta">{title}</span>}
                   {hitSummary(hit) && <span className="result-meta">{hitSummary(hit)}</span>}
                 </button>
