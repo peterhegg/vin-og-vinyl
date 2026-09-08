@@ -177,7 +177,7 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 - [x] Fase 2 — Vinyl-datamodell + DB ✓ 2026-09-08
 - [x] Fase 3 — Discogs-proxy ✓ 2026-09-08
 - [x] Fase 4 — Vinyl-UI ✓ 2026-09-08
-- [ ] Fase 5 — Kombinert navigasjon
+- [x] Fase 5 — Kombinert navigasjon ✓ 2026-09-08
 - [ ] Fase 6 — Eksport/import v2
 - [ ] Fase 7 — Tema + ikoner
 - [ ] Fase 8 — Polish
@@ -185,7 +185,7 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 - [ ] Fase 10 — Test
 - [ ] Fase 11 — Deploy-handoff
 
-**Nåværende fase:** Fase 5 — Kombinert navigasjon + delt skall + delt Innstillinger. Sonnet, medium. Samme chat som Fase 4.
+**Nåværende fase:** Fase 6 — Eksport/import v2 (`shared/backup.js`). Opus, medium. Kan deles med Fase 3 eller 5.
 
 Fase 0 gjort: navn byttet i alle filer (DB_NAME bevisst beholdt), repo renamet på
 GitHub til `vin-og-vinyl` (remote oppdatert, redirect aktiv), prod-bygg verifisert
@@ -231,6 +231,26 @@ Fase 5-omdøpingen. Verifisert i nettleser: CRUD, status-veksling, filter/søk, 
 migrering urørt, vin-siden uten regresjon. Prod-bygg grønt. design-critique kjørt (funn:
 disc-glyph-kontrast fikset, år-etikett kortet, form delt i kjerne/detaljer, chip-trykkmål
 44 px, kort viser «bærer»-format først).
+
+Fase 5 gjort: tre commits. (1) Mekanisk flytting av vin-filene til `src/wine/`
+(`src/components/`, `src/hooks/`, `src/data/` borte; `FilterBar` → `WineFilterBar`;
+`ExportImport` → `shared/components/`). (2) Mekanisk omdøping `.wine-card`/`.wine-name`
+→ `.item-card`/`.item-name`. (3) Skallet: `src/shared/useNav.js` (History API, én
+tilstand `{collection, tab, detailId, form}`, `pushState` per skjermbytte, `popstate`
+leser tilbake — Android-tilbakeknapp popper detalj → skjema → fane). `App.jsx` er nå rent
+skall: segment + kombinert tellelinje («N viner · M plater», aktiv side i aksentfarge) på
+list/add, tre skjermer (`WineScreen`/`VinylScreen`/`SettingsScreen`), bunn-nav (Samling ·
+Legg til · Innstillinger) skjult i detalj/skjema. `WineScreen` trukket ut av App (speiler
+`VinylScreen`). `SettingsScreen` + generalisert `shared/components/ExportImport.jsx`:
+**én** sikkerhetskopifil `{app, version:2, exportedAt, wines, records}`, leser v1 (naken
+array / `{wines}`) som kun-vin. `useOnlineStatus` flyttet til `shared/`.
+**Ekte bug funnet + fikset:** `pushState` lå inne i `setNav`-updateren → React StrictMode
+dobbeltkjører updateren → duplikate history-entries, tilbakeknappen måtte trykkes to
+ganger. Flyttet ut av updateren (ren funksjon), `navRef` holder synkron tilstand for
+sammensatte kall. Verifisert i nettleser: hele back-stacken (edit→detalj→liste→annen
+samling), eksport/import rundtur (v2 + v1), ingen vin-regresjon. Prod-bygg grønt.
+Fase 6 herder eksportformatet (`shared/backup.js`: cover-materialisering, én
+import-transaksjon, blob stykkevis).
 
 ## Per-fase kickoff-meldinger
 

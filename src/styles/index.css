@@ -510,10 +510,27 @@ input, select, textarea {
 .scanner-actions { padding: var(--sp-4); padding-bottom: max(env(safe-area-inset-bottom), var(--sp-4)); }
 
 /* ============================================================
-   Collection toggle (INTERIM — Fase 4; shell rebuilt in Fase 5)
+   Collection switch + combined count (the "home", ADR-2)
    ============================================================ */
 
-.app-shell > .segmented:first-of-type { margin: var(--sp-2) 0 var(--sp-4); }
+.collection-switch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 var(--sp-4);
+}
+
+.collection-count {
+  margin: 0;
+  text-align: center;
+  color: var(--text-soft);
+  font-size: var(--fs-small);
+}
+.collection-count strong {
+  font-weight: 600;
+  color: var(--text-soft);
+}
+.collection-count strong[data-active="true"] { color: var(--accent); }
 
 /* ============================================================
    Tags & chips

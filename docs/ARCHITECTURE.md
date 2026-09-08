@@ -429,7 +429,7 @@ Disse fire punktene overstyrer det som sto i planen. `PLAN.md` er oppdatert tils
 - [ ] Fase 2 — migrering verifisert mot en base som står på v1
 - [ ] Fase 3 — `shared/proxyClient.js` trukket ut, brukt av `useDiscogs`
 - [x] Fase 4 — `RatingInput`, `PhotoCapture`, `SegmentedToggle`, `FilterShell` generalisert
-- [ ] Fase 5 — vin-filer flyttet til `wine/` (egen commit)
-- [ ] Fase 5 — `useNav.js` med History API
-- [ ] Fase 5 — `.wine-card` → `.item-card` (mekanisk omdøping)
+- [x] Fase 5 — vin-filer flyttet til `wine/` (egen commit)
+- [x] Fase 5 — `useNav.js` med History API
+- [x] Fase 5 — `.wine-card` → `.item-card` (mekanisk omdøping)
 - [ ] Fase 6 — `shared/backup.js` med v2-skriving og v1-lesing
