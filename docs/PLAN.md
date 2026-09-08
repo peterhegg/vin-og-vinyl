@@ -158,7 +158,7 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 
 ## Fremdrift
 
-- [ ] Fase 0 — Rebrand + repo-rename
+- [x] Fase 0 — Rebrand + repo-rename ✓ 2026-09-08
 - [ ] Fase 1 — Arkitektur (ADR)
 - [ ] Fase 2 — Vinyl-datamodell + DB
 - [ ] Fase 3 — Discogs-proxy
@@ -171,7 +171,12 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 - [ ] Fase 10 — Test
 - [ ] Fase 11 — Deploy-handoff
 
-**Nåværende fase:** Fase 0 — ikke startet.
+**Nåværende fase:** Fase 1 — Arkitektur (ADR). Bytt til Opus, think hard.
+
+Fase 0 gjort: navn byttet i alle filer (DB_NAME bevisst beholdt), repo renamet på
+GitHub til `vin-og-vinyl` (remote oppdatert, redirect aktiv), prod-bygg verifisert
+med base `/vin-og-vinyl/`. Gjenstår for bruker (Fase 11): redeploy Worker som
+`vin-og-vinyl-proxy` + oppdater repo-secret `VITE_PROXY_URL`.
 
 ## Per-fase kickoff-meldinger
 
