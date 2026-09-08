@@ -176,7 +176,7 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 - [x] Fase 1 — Arkitektur (ADR) ✓ 2026-09-08
 - [x] Fase 2 — Vinyl-datamodell + DB ✓ 2026-09-08
 - [x] Fase 3 — Discogs-proxy ✓ 2026-09-08
-- [ ] Fase 4 — Vinyl-UI
+- [x] Fase 4 — Vinyl-UI ✓ 2026-09-08
 - [ ] Fase 5 — Kombinert navigasjon
 - [ ] Fase 6 — Eksport/import v2
 - [ ] Fase 7 — Tema + ikoner
@@ -185,7 +185,7 @@ Bytt modell i app-ens modellvelger (øverst i Code-fanen) før du starter fasen.
 - [ ] Fase 10 — Test
 - [ ] Fase 11 — Deploy-handoff
 
-**Nåværende fase:** Fase 4 — Vinyl-UI. Sonnet, think. Egen chat.
+**Nåværende fase:** Fase 5 — Kombinert navigasjon + delt skall + delt Innstillinger. Sonnet, medium. Samme chat som Fase 4.
 
 Fase 0 gjort: navn byttet i alle filer (DB_NAME bevisst beholdt), repo renamet på
 GitHub til `vin-og-vinyl` (remote oppdatert, redirect aktiv), prod-bygg verifisert
@@ -213,6 +213,24 @@ og at Vinmonopolet-ruten er uendret. **Fant og fikset en ekte rutingsbug:** `/di
 traff Vinmonopolet-ruten fordi `endsWith("/search")` også matcher den. Rutingen matcher nå
 path-segmenter. Gjenstår for bruker (Fase 11): `wrangler secret put DISCOGS_TOKEN` + redeploy —
 uten den svarer Discogs-rutene 503 mens vin-søket virker som før.
+
+Fase 4 gjort: generaliserte delte komponenter — `shared/components/SegmentedToggle.jsx`
+(fra WishlistToggle), `RatingInput.jsx` (fra CorkRating; `glyph="cork"|"disc"`, `max`),
+`PhotoCapture.jsx` (fra LabelPhoto; bruker delt `image.js`), `FilterShell.jsx` (søkefelt +
+«flere filtre»-skall). `BarcodeScanner` + `useBarcode` flyttet til `shared/` med `git mv`.
+Vin-komponentene (WineForm/Card/Detail/Search, FilterBar) peker nå på de delte — de gamle
+kopiene slettet. Vinyl-UI: `vinyl/components/RecordSearch` (Discogs 2-stegs: søk → pick →
+release+cover), `RecordForm` (kort kjerne + «Flere detaljer»-kollaps, Goldmine-nedtrekk
+media+sleeve, format-chips + fritekst, år-felt m/ forklaring), `RecordCard`, `RecordDetail`
+(fullcover via `getCover`, status-veksling), `RecordFilterBar` (artist/selskap/sjanger/stil/
+format/tiår/tilstand + 6 sorteringer). `vinyl/VinylScreen.jsx` komponerer det hele.
+**Midlertidig:** Vin/Vinyl-veksler + `data-collection` i `App.jsx` (INTERIM-kommentert) —
+Fase 5 erstatter med delt skall + `useNav`. `--accent`/`--accent-soft` innført som gull-alias
+(vinyl-aksent kommer i Fase 7). `.wine-card`-regelen deler nå navn med `.item-card` fram til
+Fase 5-omdøpingen. Verifisert i nettleser: CRUD, status-veksling, filter/søk, edit-prefill,
+migrering urørt, vin-siden uten regresjon. Prod-bygg grønt. design-critique kjørt (funn:
+disc-glyph-kontrast fikset, år-etikett kortet, form delt i kjerne/detaljer, chip-trykkmål
+44 px, kort viser «bærer»-format først).
 
 ## Per-fase kickoff-meldinger
 

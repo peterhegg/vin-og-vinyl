@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { createWine, WINE_TYPES, WINE_STATUS } from "../data/wineSchema.js";
-import CorkRating from "./CorkRating.jsx";
-import LabelPhoto from "./LabelPhoto.jsx";
-import WishlistToggle from "./WishlistToggle.jsx";
+import RatingInput from "../shared/components/RatingInput.jsx";
+import PhotoCapture from "../shared/components/PhotoCapture.jsx";
+import SegmentedToggle from "../shared/components/SegmentedToggle.jsx";
 
 const numOrNull = (v) => (v === "" || v == null ? null : Number(v));
 
@@ -24,7 +24,15 @@ export default function WineForm({ initial, onSave, onCancel }) {
 
   return (
     <form onSubmit={submit} className="stack">
-      <WishlistToggle status={wine.status} onChange={(status) => set({ status })} />
+      <SegmentedToggle
+        ariaLabel="Status"
+        value={wine.status}
+        onChange={(status) => set({ status })}
+        options={[
+          { value: WINE_STATUS.TASTED, label: "Smakt" },
+          { value: WINE_STATUS.WISH, label: "Ønskeliste" },
+        ]}
+      />
 
       <div className="field">
         <label htmlFor="name">Navn</label>
@@ -143,7 +151,7 @@ export default function WineForm({ initial, onSave, onCancel }) {
 
       <div className="field">
         <label>Mine korkpoeng</label>
-        <CorkRating value={wine.myScore} onChange={(myScore) => set({ myScore })} />
+        <RatingInput glyph="cork" label="Korkpoeng" value={wine.myScore} onChange={(myScore) => set({ myScore })} />
       </div>
 
       <div className="field">
@@ -214,7 +222,11 @@ export default function WineForm({ initial, onSave, onCancel }) {
         />
       </div>
 
-      <LabelPhoto value={wine.labelImageBase64} onChange={(labelImageBase64) => set({ labelImageBase64 })} />
+      <PhotoCapture
+        label="Etikettbilde"
+        value={wine.labelImageBase64}
+        onChange={(labelImageBase64) => set({ labelImageBase64 })}
+      />
 
       <div className="row" style={{ marginTop: 8 }}>
         <button type="button" className="btn btn-ghost" style={{ flex: 1 }} onClick={onCancel}>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import CorkRating from "./CorkRating.jsx";
+import RatingInput from "../shared/components/RatingInput.jsx";
 
 const Row = ({ label, value }) =>
   value ? (
@@ -33,7 +33,7 @@ export default function WineDetail({ wine, onEdit, onDelete, onToggleWantAgain, 
         </p>
       </div>
 
-      {wine.myScore != null && <CorkRating value={wine.myScore} readOnly size={22} />}
+      {wine.myScore != null && <RatingInput glyph="cork" value={wine.myScore} readOnly size={22} />}
 
       <button
         type="button"

@@ -428,7 +428,7 @@ Disse fire punktene overstyrer det som sto i planen. `PLAN.md` er oppdatert tils
 - [ ] Fase 2 — `recordSchema.js` ferdigstilles per ADR-4 og ADR-7
 - [ ] Fase 2 — migrering verifisert mot en base som står på v1
 - [ ] Fase 3 — `shared/proxyClient.js` trukket ut, brukt av `useDiscogs`
-- [ ] Fase 4 — `RatingInput`, `PhotoCapture`, `SegmentedToggle`, `FilterShell` generalisert
+- [x] Fase 4 — `RatingInput`, `PhotoCapture`, `SegmentedToggle`, `FilterShell` generalisert
 - [ ] Fase 5 — vin-filer flyttet til `wine/` (egen commit)
 - [ ] Fase 5 — `useNav.js` med History API
 - [ ] Fase 5 — `.wine-card` → `.item-card` (mekanisk omdøping)

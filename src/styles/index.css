@@ -12,6 +12,10 @@
   --gold-soft: #9c823a;
   --gold-tint: rgba(201, 168, 76, 0.12);
 
+  /* Collection accent — gold for wine; a vinyl override lands here in Fase 7 (ADR-8). */
+  --accent: var(--gold);
+  --accent-soft: var(--gold-soft);
+
   /* Color — text */
   --text: #F2E8D0;
   --text-soft: #A89080;
@@ -19,6 +23,7 @@
   /* Color — semantic */
   --cork: #8B4513;
   --cork-empty: #93715a; /* contrast-checked: ≥3:1 against surface & surface-2 (1.4.11) */
+  --rating-empty: #93715a; /* inactive rating glyphs (cork/disc) — same contrast guarantee */
   --success: #8caf94; /* contrast-checked: ≥4.5:1 against bg & surface (1.4.3) */
   --danger: #C96A4F;
   --line: rgba(242, 232, 208, 0.1);
@@ -269,7 +274,10 @@ input, select, textarea {
    Cards & lists
    ============================================================ */
 
-.wine-card {
+/* .wine-card is renamed to .item-card in the Fase 5 mechanical pass (ADR-8);
+   vinyl already uses the neutral name, so the rule is shared until then. */
+.wine-card,
+.item-card {
   width: 100%;
   display: flex;
   gap: var(--sp-3);
@@ -281,7 +289,8 @@ input, select, textarea {
   box-shadow: var(--shadow-soft);
   transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
-.wine-card:active { transform: scale(0.985); }
+.wine-card:active,
+.item-card:active { transform: scale(0.985); }
 
 .card-thumb {
   width: 56px;
@@ -503,3 +512,44 @@ input, select, textarea {
   box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.4);
 }
 .scanner-actions { padding: var(--sp-4); padding-bottom: max(env(safe-area-inset-bottom), var(--sp-4)); }
+
+/* ============================================================
+   Collection toggle (INTERIM — Fase 4; shell rebuilt in Fase 5)
+   ============================================================ */
+
+.app-shell > .segmented:first-of-type { margin: var(--sp-2) 0 var(--sp-4); }
+
+/* ============================================================
+   Tags & chips
+   ============================================================ */
+
+.tag {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent-soft);
+  border-radius: 999px;
+  padding: 2px 8px;
+  line-height: 1.4;
+}
+
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+
+.chip {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: var(--fs-small);
+  color: var(--text-soft);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.chip--on {
+  background: var(--gold-tint);
+  color: var(--text);
+  border-color: var(--accent-soft);
+}

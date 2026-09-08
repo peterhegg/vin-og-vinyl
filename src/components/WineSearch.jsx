@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useVinmonopolet } from "../hooks/useVinmonopolet.js";
-import { barcodeSupported } from "../hooks/useBarcode.js";
-import BarcodeScanner from "./BarcodeScanner.jsx";
+import { barcodeSupported } from "../shared/useBarcode.js";
+import BarcodeScanner from "../shared/components/BarcodeScanner.jsx";
 
 /** Search-first entry point: Vinmonopolet search, barcode lookup, or manual entry. */
 export default function WineSearch({ onSelect, onManual }) {

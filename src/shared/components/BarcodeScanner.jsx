@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useBarcode } from "../hooks/useBarcode.js";
+import { useBarcode } from "../useBarcode.js";
 
 /** Full-screen camera overlay. Calls onDetected(ean) once, then onClose(). */
 export default function BarcodeScanner({ onDetected, onClose }) {

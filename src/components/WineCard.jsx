@@ -1,4 +1,4 @@
-import CorkRating from "./CorkRating.jsx";
+import RatingInput from "../shared/components/RatingInput.jsx";
 
 /** Compact card for the wine list. */
 export default function WineCard({ wine, onOpen }) {
@@ -24,7 +24,7 @@ export default function WineCard({ wine, onOpen }) {
           {[wine.producer, wine.type, wine.country].filter(Boolean).join(" · ") || "—"}
         </span>
         <div className="card-footer">
-          {wine.myScore ? <CorkRating value={wine.myScore} readOnly size={14} /> : <span />}
+          {wine.myScore ? <RatingInput glyph="cork" value={wine.myScore} readOnly size={14} /> : <span />}
           <span className="card-qty">{wine.quantity > 0 ? `${wine.quantity} stk` : ""}</span>
         </div>
       </div>

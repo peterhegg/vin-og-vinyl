@@ -1,32 +1,15 @@
 import { useRef, useState } from "react";
+import { compressImage } from "../image.js";
 
-const MAX_WIDTH = 800;
-const JPEG_QUALITY = 0.7;
-
-function compressImage(file) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      const scale = Math.min(1, MAX_WIDTH / img.width);
-      const w = Math.round(img.width * scale);
-      const h = Math.round(img.height * scale);
-      const canvas = document.createElement("canvas");
-      canvas.width = w;
-      canvas.height = h;
-      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-      URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL("image/jpeg", JPEG_QUALITY));
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("image_load_failed"));
-    };
-    img.src = url;
-  });
-}
-
-export default function LabelPhoto({ value, onChange }) {
+/**
+ * Camera / gallery image picker. Knows no domain fields (ADR-5): `label` names
+ * the thing being photographed, `maxWidth` bounds the stored image. Emits one
+ * JPEG data URL (or null on removal). Replaces the wine-only LabelPhoto.
+ *
+ * A record's inline thumbnail is derived downstream by useRecordDB (ADR-4);
+ * this component only produces the full-size image.
+ */
+export default function PhotoCapture({ label = "Bilde", value, onChange, maxWidth }) {
   const cameraRef = useRef(null);
   const galleryRef = useRef(null);
   const [busy, setBusy] = useState(false);
@@ -37,8 +20,7 @@ export default function LabelPhoto({ value, onChange }) {
     if (!file) return;
     setBusy(true);
     try {
-      const dataUrl = await compressImage(file);
-      onChange(dataUrl);
+      onChange(await compressImage(file, maxWidth));
     } catch {
       // ignore — user can retry
     } finally {
@@ -48,11 +30,11 @@ export default function LabelPhoto({ value, onChange }) {
 
   return (
     <div className="field">
-      <label>Etikettbilde</label>
+      <label>{label}</label>
       {value && (
         <img
           src={value}
-          alt="Etikett"
+          alt={label}
           style={{ width: "100%", maxWidth: 240, borderRadius: "var(--radius-sm)", border: "1px solid var(--line)" }}
         />
       )}
@@ -69,14 +51,7 @@ export default function LabelPhoto({ value, onChange }) {
           </button>
         )}
       </div>
-      <input
-        ref={cameraRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        hidden
-        onChange={handleFile}
-      />
+      <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={handleFile} />
       <input ref={galleryRef} type="file" accept="image/*" hidden onChange={handleFile} />
     </div>
   );

@@ -6,6 +6,8 @@ import WineCard from "./components/WineCard.jsx";
 import WineDetail from "./components/WineDetail.jsx";
 import FilterBar from "./components/FilterBar.jsx";
 import ExportImport from "./components/ExportImport.jsx";
+import SegmentedToggle from "./shared/components/SegmentedToggle.jsx";
+import VinylScreen from "./vinyl/VinylScreen.jsx";
 
 const TABS = [
   { id: "cellar", label: "Kjeller", icon: "🍷" },
@@ -32,6 +34,10 @@ export default function App() {
   const { wines, addWine, updateWine, deleteWine, stats, importWines } = useWineDB();
   const online = useOnlineStatus();
 
+  // INTERIM (Fase 4): a plain toggle between the wine app and the vinyl app so
+  // the vinyl UI can be reviewed. Fase 5 replaces this with the shared shell,
+  // shared/useNav.js and a combined Settings screen (ADR-2).
+  const [collection, setCollection] = useState("wine");
   const [tab, setTab] = useState("cellar");
   const [detailId, setDetailId] = useState(null);
   const [formInitial, setFormInitial] = useState(null); // non-null → form screen is showing
@@ -62,9 +68,23 @@ export default function App() {
   };
 
   return (
-    <div className="app-shell">
-      {!online && <div className="offline-banner">Ingen nettforbindelse — Vinmonopolet-søk krever nett</div>}
+    <div className="app-shell" data-collection={collection}>
+      {!online && <div className="offline-banner">Ingen nettforbindelse — søk krever nett</div>}
 
+      <SegmentedToggle
+        ariaLabel="Samling"
+        value={collection}
+        onChange={setCollection}
+        options={[
+          { value: "wine", label: "Vin" },
+          { value: "vinyl", label: "Vinyl" },
+        ]}
+      />
+
+      {collection === "vinyl" ? (
+        <VinylScreen online={online} />
+      ) : (
+      <>
       {detailWine ? (
         <WineDetail
           wine={detailWine}
@@ -144,6 +164,8 @@ export default function App() {
             </button>
           ))}
         </nav>
+      )}
+      </>
       )}
     </div>
   );
